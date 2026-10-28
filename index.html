@@ -371,6 +371,7 @@ button.press:hover,button.press:focus-visible{color:var(--yel-l);animation-durat
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 .guestbox{margin-top:16px;padding-top:14px;border-top:2px dashed var(--line,rgba(255,255,255,.18));display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}.guestbox span{font-size:15px;color:var(--fg2)}.guestbox small{flex-basis:100%;font-size:13px;color:var(--fg2);line-height:1.5}
 .cond{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}.cond li{position:relative;padding:6px 10px 6px 34px;background:rgba(232,80,74,.1);border-left:4px solid #e8504a;font-size:15px;line-height:1.45}.cond li::before{content:'✘';position:absolute;left:10px;top:6px;color:#e8504a}.cond li.ok{background:rgba(94,201,90,.14);border-color:#5ec95a}.cond li.ok::before{content:'✔';color:#3c9a39}.cond b{font-weight:400;margin-right:8px}.cond span{display:block;font-size:13px;opacity:.75}
+.qbz-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}.qbz-h h3{margin:0}.qb .jump{margin-top:8px}.pvtag{color:#ffd34e!important;border-color:#ffd34e!important}
 </style>
 
 <main id="view"></main>
@@ -410,7 +411,8 @@ const fresh=()=>Object.assign({},DEF,{qs:{},stat:{n:0,f:0},zones:{}});
 const sidOf=st=>st?st.cls+'-'+st.seat:'';
 function loadKey(k){try{const r=localStorage.getItem(k);if(r)return Object.assign(fresh(),JSON.parse(r));}catch(e){}return null;}
 let S=(()=>{let sid='';try{sid=localStorage.getItem(CUR)||'';}catch(e){}return(sid&&loadKey(SKEY(sid)))||loadKey(KEY)||fresh();})();
-function save(){try{localStorage.setItem(S.student?SKEY(sidOf(S.student)):KEY,JSON.stringify(S));}catch(e){}}
+let PV=null;
+function save(){if(PV)return;try{localStorage.setItem(S.student?SKEY(sidOf(S.student)):KEY,JSON.stringify(S));}catch(e){}}
 const toHalf=v=>String(v||'').replace(/[０-９]/g,d=>String.fromCharCode(d.charCodeAt(0)-65248));
 
 /* ---------- learning log → Google Sheets ---------- */
@@ -420,7 +422,7 @@ let flushT=0,inflight=false;
 const logUrl=()=>String(LOG_URL||'').trim();
 const strip=h=>String(h==null?'':h).replace(/<br\s*\/?>/g,' ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
 function saveQ(){try{localStorage.setItem(QKEY,JSON.stringify(LQ));}catch(e){}}
-function logEv(type,d){if(!S.student)return;
+function logEv(type,d){if(PV||!S.student)return;
   LQ.push(Object.assign({id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),t:new Date().toISOString(),type,st:Object.assign({},S.student),shop:S.shop||''},d||{}));
   if(LQ.length>2000)LQ=LQ.slice(-2000);saveQ();scheduleFlush();}
 const fmtMs=ms=>{const t=Math.round((ms||0)/1000);return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');};
@@ -779,7 +781,7 @@ function benchExtra(b){
 const view=$('#view');let sel='office';
 let clkT=0;
 function setView(html){stopAnim();clearInterval(clkT);view.innerHTML=html;window.scrollTo(0,0);}
-function titleScreen(){
+function titleScreen(){if(PV){S=PV.S;PV=null;L=null;}
   setView(`<section class="title"><canvas class="px" id="tcv" width="240" height="135" aria-label="${esc(sname())}的街景"></canvas>
    <div class="tt"><div class="kick">PEARL &amp; PROPORTION<br>康軒九上 第一章 相似形</div>
    <h1 class="logo" style="${sname().length>7?'font-size:clamp(34px,7vw,84px)':sname().length>5?'font-size:clamp(40px,8vw,98px)':''}">${esc(sname())}</h1>
@@ -844,7 +846,7 @@ function askName(edit,pre){overlay((o,close)=>{let fails=0;
   render(pre);});}
 function switchStudent(){flush();try{localStorage.removeItem(CUR);if(S.guest)localStorage.removeItem(KEY);}catch(e){}const m=S.muted;S=fresh();S.muted=m;applyTM();titleScreen();toast('已登出','換下一位同學登入','↺');}
 
-function hub(){
+function hub(){if(PV){exitPreview();return;}
   {const tz=nextTarget();if(tz)sel=tz.id;}
   const doneN=ZONES.filter(z=>zState(z).done).length,starN=ZONES.reduce((a,z)=>a+zState(z).stars,0);
   setView(`<header class="hud"><div class="hud-l"><img class="px" src="${ICON_LOGO}" alt=""><div class="hud-t"><small>DAY ${S.day}</small><b>${esc(sname())}</b></div></div><div class="hud-r" id="hudr">${hudStats()}</div></header>
@@ -1173,7 +1175,7 @@ function teacherLogin(){unlockAudio();sfx('sel');
   askKey();}
 function tmCard(){const on=tmOn();return `<div class="ov-row" style="justify-content:space-between;align-items:center"><div style="min-width:0;flex:1 1 320px"><b style="font-weight:400;font-size:19px;color:var(--yel)">教師模式・課堂示範</b><p style="font-size:15px;color:var(--fg2);margin-top:4px">${on?'這台裝置<b style="font-weight:400;color:var(--grn)">已開啟教師模式</b>：每張訂單下方顯示解答，五個區域全部解鎖。登出或關閉瀏覽器後自動關閉。':'開啟後，這台裝置的每張訂單下方會顯示解答，五個區域全部解鎖，方便投影示範。只影響這台裝置，不會改到學生的進度。'}</p></div><div class="ov-row"><button type="button" class="pbtn ${on?'alt ':''}sm" id="tmT">${on?'關閉教師模式':'開啟教師模式'}</button>${on?'<button type="button" class="pbtn sm" id="tmGo">到店面示範</button>':''}</div></div>`;}
 function bindTM(root,redraw){const t=root.querySelector('#tmT');if(t)t.onclick=()=>{setTM(!tmOn());sfx(tmOn()?'ok':'sel');redraw();};const g=root.querySelector('#tmGo');if(g)g.onclick=()=>{sfx('enter');hub();};}
-function demoTools(){overlay((o,close)=>{const draw=()=>{o.innerHTML=`<div class="ovc win pad wide"><div class="ov-k">TEACHER</div><h2>教師工具</h2><p>還沒設定紀錄網址（LOG_URL），所以看不到全班紀錄。上傳 GitHub Pages 並填好網址後，這裡會先要求教師密碼。</p>${tmCard()}<div class="ov-row"><button class="pbtn alt" id="bankB">瀏覽關卡題庫</button><button class="pbtn alt" data-primary>關閉</button></div></div>`;bindTM(o,draw);o.querySelector('#bankB').onclick=()=>close().then(()=>overlay((o2,c2)=>{o2.innerHTML=`<div class="ovc win pad wide"><div class="ov-k">QUESTION BANK</div><h2>關卡題庫</h2><div style="max-height:62vh;overflow:auto">${bankHTML()}</div><div class="ov-row"><button class="pbtn" data-primary>關閉</button></div></div>`;o2.querySelector('[data-primary]').onclick=()=>c2();}));o.querySelector('[data-primary]').onclick=()=>close();const g=o.querySelector('#tmGo');if(g){const f=g.onclick;g.onclick=()=>close().then(f);}};draw();});}
+function demoTools(){overlay((o,close)=>{const draw=()=>{o.innerHTML=`<div class="ovc win pad wide"><div class="ov-k">TEACHER</div><h2>教師工具</h2><p>還沒設定紀錄網址（LOG_URL），所以看不到全班紀錄。上傳 GitHub Pages 並填好網址後，這裡會先要求教師密碼。</p>${tmCard()}<div class="ov-row"><button class="pbtn alt" id="bankB">瀏覽關卡題庫</button><button class="pbtn alt" data-primary>關閉</button></div></div>`;bindTM(o,draw);o.querySelector('#bankB').onclick=()=>close().then(()=>overlay((o2,c2)=>{o2.innerHTML=`<div class="ovc win pad wide"><div class="ov-k">QUESTION BANK</div><h2>關卡題庫</h2><div style="max-height:62vh;overflow:auto">${bankHTML()}</div><div class="ov-row"><button class="pbtn" data-primary>關閉</button></div></div>`;o2.querySelector('[data-primary]').onclick=()=>c2();bindBank(o2,titleScreen,c2);}));o.querySelector('[data-primary]').onclick=()=>close();const g=o.querySelector('#tmGo');if(g){const f=g.onclick;g.onclick=()=>close().then(f);}};draw();});}
 function askKey(cb){overlay((o,close)=>{
   o.innerHTML=`<div class="ovc win pad"><div class="ov-k">TEACHER</div><h2>教師入口</h2><p>輸入教師密碼，查看全班的經營紀錄。</p><label class="fld" for="tkIn">教師密碼<input type="password" id="tkIn" autocomplete="current-password"></label><p class="err" id="tkE" aria-live="polite"></p><div class="ov-row"><button class="pbtn" data-primary>進入</button><button class="pbtn alt" id="tkC">取消</button></div></div>`;
   const inp=o.querySelector('#tkIn'),er=o.querySelector('#tkE'),btn=o.querySelector('[data-primary]');setTimeout(()=>inp.focus(),80);
@@ -1217,7 +1219,7 @@ function renderT(m){const f=tFilter(m),out=$('#tout'),ans=f.logs.filter(l=>l.ev=
   const today=f.students.filter(s=>s.last&&s.last.toDateString()===new Date().toDateString()).length,live=f.students.filter(s=>s.last&&now-s.last<5*60000).length;
   const cleared=f.students.filter(s=>s.stars>0).length,fr=ans.length?Math.round(ans.filter(a=>a.first).length/ans.length*100):null;
   $('#tstats').innerHTML=`<div class="tstats"><div class="win tstat"><b>${f.students.length}</b><span>學生人數</span><small>今天上線 ${today} 人・正在玩 ${live} 人</small></div><div class="win tstat"><b>${cleared}</b><span>終章通過</span><small>${f.students.length?Math.round(cleared/f.students.length*100):0}% 的學生</small></div><div class="win tstat"><b>${fr==null?'—':fr+'%'}</b><span>第一次就答對</span><small>共 ${ans.length} 次作答</small></div><div class="win tstat"><b>${(()=>{const p=f.students.map(s=>+s.price).filter(Boolean);return p.length?'$'+Math.round(p.reduce((a,b)=>a+b,0)/p.length):'—';})()}</b><span>平均大杯定價</span><small>合理區間 $74～$86</small></div><div class="win tstat"><b>${(()=>{const p=f.students.map(s=>s.mins).filter(Boolean);return p.length?(p.reduce((a,b)=>a+b,0)/p.length).toFixed(1)+'分':'—';})()}</b><span>平均遊戲時間</span><small>目標 20 分鐘內</small></div></div>`;
-  if(T.tab==='bank'){out.innerHTML=bankHTML();return;}
+  if(T.tab==='bank'){out.innerHTML=bankHTML()+'';bindBank(out,()=>{T.tab='bank';showTeacher();});return;}
   if(T.tab==='roster'){out.innerHTML=rosterHTML(m);bindRoster(out);return;}
   if(T.tab!=='bank'&&!f.students.length&&!f.logs.length){out.innerHTML='<div class="tempty">還沒有學生的紀錄。<br>學生從 GitHub Pages 網址進入遊戲、登記上班後，資料就會出現在這裡。</div>';return;}
   if(T.tab==='students'){
@@ -1264,12 +1266,19 @@ function bindRoster(root){const b=root.querySelector('#rosterUp');if(!b)return;b
     if(!r.ok){msg.textContent='上傳失敗：'+r.error;b.disabled=false;return;}
     const d=await fetchTeacher(T.key);if(d.ok)T.data=d;sfx('ok');toast('名單已更新',`共 ${r.n} 人`,'名');showTeacher();}
   catch(e){msg.textContent='連不上紀錄服務。';b.disabled=false;}};}
+function bindBank(root,ret,closeFn){root.querySelectorAll('.jump').forEach(b=>b.onclick=()=>{const go=()=>previewStage(b.dataset.z,+b.dataset.i,ret);closeFn?closeFn().then(go):go();});}
+function previewStage(id,i,ret){unlockAudio();sfx('enter');if(!PV)PV={S,ret};const m=S.muted;S=fresh();S.name='老師';S.shop='教師試玩';S.muted=m;
+  startStage(id);const hr=$('#hudr');const tag=E('span','stat pvtag','教師試玩・不記錄');hr.prepend(tag);
+  const ex=[...hr.querySelectorAll('button')].find(x=>x.textContent.includes('回店面'));if(ex)ex.textContent='◀ 回題庫';
+  if(i>0){clearInterval(typing);typing=null;L.i=i;L.hist=[];L.mlShown=L.lv.steps.slice(0,i).some(x=>x.reveal);const bm=benchAt(i);L.bench=bm;$('#arena').classList.toggle('nobench',bm==='none');refreshBench();$('#dbox').classList.remove('hide');run();}}
+function exitPreview(){const p=PV;PV=null;L=null;S=p.S;applyTM();(p.ret||titleScreen)();}
 function bankHTML(){return ZONES.map(z=>{const lv=LEVELS[z.id];let n=0;
-  const qs=lv.steps.map(st=>{
+  const jb=i=>`<button type="button" class="pbtn alt sm jump" data-z="${z.id}" data-i="${i}">▶ 跳到這題試玩</button>`;
+  const qs=lv.steps.map((st,si)=>{
     if(st.t==='note')return `<div class="qb note"><span class="t">員工手冊：${st.title}</span>　${st.body}${st.sub?'<br>'+st.sub:''}</div>`;
     if(st.t==='price')return `<div class="qb"><div class="h"><b>ORDER ${PRICEQ.no}</b><span>經濟・行銷</span><span>拖動價格滑桿</span></div><div class="p">店長想賣 $60。找出財務長和珍珍都點頭的大杯價錢。</div>
       <div class="a">正解：$74～$86（毛利率 ≥ 55% 且每 100 ml ≤ $10）</div><div class="x">大杯總成本 $${COST}＝864 ml × $0.03＋杯子封膜 $5 × 1.44</div><div class="x">常見錯誤：照高度定價 $60；低於 $74 毛利率不足；高於 $86 每 100 ml 比中杯貴。</div>
-      <div class="t">教學提示：可請學生列不等式 (p − ${COST}) ÷ p ≥ 0.55、p ÷ 8.64 ≤ 10。</div></div>`;
+      <div class="t">教學提示：可請學生列不等式 (p − ${COST}) ÷ p ≥ 0.55、p ÷ 8.64 ≤ 10。</div>${jb(si)}</div>`;
     if(st.t!=='q')return '';n++;
     const choice=st.type==='choice';
     const mis=choice?st.choices.map((c,i)=>i!==st.answer&&st.tags&&st.tags[i]?`${c}${st.cu||''} → ${st.tags[i]}`:'').filter(Boolean):(st.diag||[]).map(d=>`${d[0]}${st.unit?' '+st.unit:''} → ${d[3]||d[1]}`);
@@ -1279,8 +1288,8 @@ function bankHTML(){return ZONES.map(z=>{const lv=LEVELS[z.id];let n=0;
       <div class="x">解說：${st.explain}</div>
       ${st.hint?`<div class="x">提示：${st.hint}</div>`:''}
       ${mis.length?`<div class="x">系統會診斷的迷思：${mis.join('；')}</div>`:''}
-      ${st.ans?`<div class="t">教學提示：${st.ans}</div>`:''}</div>`;}).join('');
-  return `<div class="qb-zone"><h3>0${z.no} ${z.name}・${lv.title}</h3><div class="x" style="color:var(--fg2);margin-bottom:8px">${z.unit}・${z.subj.join('、')}</div>${qs}</div>`;}).join('');}
+      ${st.ans?`<div class="t">教學提示：${st.ans}</div>`:''}${jb(si)}</div>`;}).join('');
+  return `<div class="qb-zone"><div class="qbz-h"><h3>0${z.no} ${z.name}・${lv.title}</h3><button type="button" class="pbtn sm jump" data-z="${z.id}" data-i="0">▶ 從頭試玩這一關</button></div><div class="x" style="color:var(--fg2);margin-bottom:8px">${z.unit}・${z.subj.join('、')}</div>${qs}</div>`;}).join('');}
 function studentDetail(s,m){const mine=m.logs.filter(l=>l.cls===s.cls&&l.seat===s.seat).slice().sort((a,b)=>(a.t||0)-(b.t||0));sfx('sel');
   const ans=mine.filter(l=>l.ev==='作答');
   const typ={'作答':'e-ans','進入關卡':'e-start','過關':'e-clear','中途離開':'e-leave'};
