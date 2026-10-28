@@ -786,7 +786,7 @@ function titleScreen(){
    <p class="tt-lead">傍晚六點，店門口的燈串亮了。配方、杯子、招牌、吸管、價錢，每一件事都藏著相似形。今天換你當店長！</p>
    <div class="tt-menu"><button class="pbtn" id="go" data-primary>開店營業</button><button class="pbtn alt" id="howto">玩法說明</button><button class="pbtn alt" id="lbd">排行榜</button><button class="pbtn alt" id="tch">教師入口</button></div>
    <button type="button" class="press" id="pst">PRESS START</button>
-   <div class="tt-foot">${S.shop?`歡迎回到「${esc(S.shop)}」・ `:''}指導老師：余佳霖老師 ・ Find the value of you!</div></div></section>`);
+   <div class="tt-foot">${S.shop?`歡迎回到「${esc(S.shop)}」・ `:''}設計：余佳霖老師 ・ Find the value of you!</div></div></section>`);
   titleScene($('#tcv'));
   $('#tch').onclick=teacherLogin;
   const start=()=>{unlockAudio();sfx('enter');(S.student||S.guest)?hub():askName();};$('#go').onclick=start;$('#pst').onclick=start;$('#lbd').onclick=()=>{unlockAudio();showBoard();};

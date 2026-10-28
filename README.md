@@ -11,4 +11,4 @@
 - `index.html`：遊戲本體（GitHub Pages 直接開啟）。開頭的 `LOG_URL` 填入 Apps Script 網址後，作答紀錄與排行榜才會連到 Google 試算表。
 - `Code.gs`：Google Apps Script 後台（學生紀錄、排行榜、教師後台）。安裝步驟寫在檔案開頭。
 
-指導老師：余佳霖老師 ・ Valerie Yu Studio ・ Find the value of you!
+設計：余佳霖老師 ・ Valerie Yu Studio ・ Find the value of you!
