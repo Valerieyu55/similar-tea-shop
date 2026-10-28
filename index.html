@@ -370,6 +370,7 @@ button.press:hover,button.press:focus-visible{color:var(--yel-l);animation-durat
 }
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 .guestbox{margin-top:16px;padding-top:14px;border-top:2px dashed var(--line,rgba(255,255,255,.18));display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}.guestbox span{font-size:15px;color:var(--fg2)}.guestbox small{flex-basis:100%;font-size:13px;color:var(--fg2);line-height:1.5}
+.cond{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}.cond li{position:relative;padding:6px 10px 6px 34px;background:rgba(232,80,74,.1);border-left:4px solid #e8504a;font-size:15px;line-height:1.45}.cond li::before{content:'✘';position:absolute;left:10px;top:6px;color:#e8504a}.cond li.ok{background:rgba(94,201,90,.14);border-color:#5ec95a}.cond li.ok::before{content:'✔';color:#3c9a39}.cond b{font-weight:400;margin-right:8px}.cond span{display:block;font-size:13px;opacity:.75}
 </style>
 
 <main id="view"></main>
@@ -957,7 +958,18 @@ const LEVELS={
    miss:'再想想：相似比是 1.2，面積比是相似比的幾次方？',hint:'圓面積＝π × r²。半徑變成 1.2 倍時，r² 會變成幾倍？',
    explain:'1.2² ＝ 1.44。大杯封膜約 64 × 1.44 ≈ 92 cm²，店長差點少訂一大批。',ans:'1.44。學生填 1.2 → 系統診斷「把相似比當面積比」。'}),
   note('面積比＝相似比²','兩個相似圖形，相似比是 k，面積比就是 k²。','延伸：容量（體積）比＝相似比³，大杯裝 500 × 1.728＝864 ml。'),
-  say('fin','店長說照高度乘 1.2，大杯賣 $60 就好。{name}，工作檯上有成本表，你來定價。'),
+  say('boss','那大杯就照高度乘 1.2，賣 $60 好了！'),
+  say('fin','店長先別急。定價之前，{name}要先學會財務室最重要的一個詞：<b>毛利率</b>。'),
+  note('毛利率＝毛利 ÷ 售價','毛利＝售價 − 成本，是賣一杯真正留在店裡的錢。<br>毛利率＝毛利 ÷ 售價，代表售價裡有幾成是賺的。','例：一杯紅茶賣 $40、成本 $10 → 毛利 $30 → 毛利率＝30 ÷ 40＝75%。'),
+  say('fin','換你算算看我們的中杯。中杯 500 ml，飲料每 ml 成本 $0.03，杯子加封膜 $5，所以成本是 500 × 0.03 ＋ 5 ＝ $20。'),
+  Q({no:'05-3',short:'中杯毛利率',tag:'經濟・毛利率',practice:true,xp:15,rev:20,unit:'%',answer:60,tol:.01,prompt:'中杯賣 $50，成本 $20。中杯的毛利率是多少 %？',
+   diag:[[30,'這是毛利，還沒除','$30 是毛利（賺的錢），毛利率還要再除以售價 $50。','只算毛利沒除以售價'],[40,'這是成本占售價的比例','20 ÷ 50＝40% 是成本占幾成，毛利率要用「毛利」去除。','用成本除以售價'],[150,'除錯對象了','毛利率是除以「售價」$50，不是除以成本 $20。','除以成本'],[0.6,'差一步：換成百分率','0.6 是小數，題目要百分率：0.6＝60%。','沒換成百分率']],
+   miss:'先算毛利＝售價 − 成本，再除以售價，最後換成百分率。',hint:'毛利＝50 − 20＝30。30 ÷ 50＝？',
+   explain:'毛利 50 − 20＝$30，毛利率＝30 ÷ 50＝60%。每賣 $50，有 $30 是店裡賺的。',ans:'60%。練習題，答錯不影響星等。'}),
+  say('fin','財務室的規定：大杯的毛利率不能低於 <b>55%</b>。毛利率 55%，就是成本最多只能占售價的 45%。'),
+  note('用毛利率反推最低售價','毛利率 ≥ 55% ⇔ 成本 ÷ 售價 ≤ 45%<br>所以 最低售價＝成本 ÷ 0.45','例：中杯成本 $20 → 售價至少 20 ÷ 0.45 ≈ $44.4。大杯成本請看工作檯的成本表。'),
+  say('cus','還有我！大杯每 100 ml 不能比中杯貴喔。中杯 500 ml 賣 $50，每 100 ml 是 $10；大杯有 864 ml。'),
+  say('fin','兩個條件都要過。{name}，工作檯上有成本表和兩個儀表，你來定價。'),
   wb('price'),
   PR(),
   say('cus','每 100 ml 比中杯便宜，我明天一定點大杯！店長，你請到一個好幫手了！')]}
@@ -1025,19 +1037,20 @@ function question(st){const left=showQ();if(!L.solved[L.i])att();
     const check=()=>{const v=parseFloat(inp.value);
       if(isNaN(v)){fb.innerHTML='<div class="hint">先在收銀機上輸入一個數字。</div>';return;}
       if(Math.abs(v-st.answer)<=st.tol){inp.disabled=true;$('#qs').disabled=true;win(String(v));return;}
-      const d=(st.diag||[]).find(([x])=>Math.abs(v-x)<=(st.dtol||.01));{const a=att();a.g.push(String(v));a.dg.push(d?(d[3]||d[1]):'其他錯誤');}L.wrong++;wrongFx();stampIt('退單',false);
+      const d=(st.diag||[]).find(([x])=>Math.abs(v-x)<=(st.dtol||.01));{const a=att();a.g.push(String(v));a.dg.push(d?(d[3]||d[1]):'其他錯誤');}if(!st.free&&!st.practice)L.wrong++;wrongFx();stampIt('退單',false);
       fb.innerHTML=d?`<div class="bad">${d[1]}</div><div>${d[2]}</div>`:`<div class="bad">還不對</div><div>${st.miss}</div>`;};
     $('#qs').onclick=check;inp.onkeydown=e=>{if(e.key==='Enter')check();};}
   else document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;
     if(i===st.answer){document.querySelectorAll('.opt').forEach(x=>x.disabled=true);b.classList.add('yes');win(st.choices[i]);}
-    else{b.classList.add('no');b.disabled=true;{const a=att();a.g.push(st.choices[i]);a.dg.push((st.tags||[])[i]||'');}if(!st.free)L.wrong++;wrongFx();fb.innerHTML=`<div class="bad">再想想</div><div>${st.why[i]}</div>`;}});
+    else{b.classList.add('no');b.disabled=true;{const a=att();a.g.push(st.choices[i]);a.dg.push((st.tags||[])[i]||'');}if(!st.free&&!st.practice)L.wrong++;wrongFx();fb.innerHTML=`<div class="bad">再想想</div><div>${st.why[i]}</div>`;}});
 }
 function priceTicket(){const left=showQ();if(!L.solved[L.i])att();
-  left.innerHTML=ticket('05-4','經濟・行銷',30,0,`<p class="tk-p">店長想賣 $60。拖動工作檯上的價格，找出財務長和珍珍都點頭的價錢，再提出定價。</p>
-   <div class="readout">目前提案<b id="ro">$${L.price}</b></div><div class="tk-in"><button class="pbtn" id="ps">提出定價</button></div>
+  left.innerHTML=ticket('05-4','經濟・行銷',30,0,`<p class="tk-p">店長想賣 $60。拖動工作檯上的價格，找出兩個條件都打勾的價錢，再提出定價。</p>
+   <div class="readout">目前提案<b id="ro">$${L.price}</b></div>
+   <ul class="cond"><li id="c1"><b>條件 1・財務長</b>毛利率 ≥ 55%<span id="c1v"></span></li><li id="c2"><b>條件 2・珍珍</b>每 100 ml ≤ $10<span id="c2v"></span></li></ul><div class="tk-in"><button class="pbtn" id="ps">提出定價</button></div>
    <div class="tk-fb" id="fb"></div><div class="tk-next" id="tkn"></div>${backBtn('qb','上一步')}
    <div class="tk-ans">教師提示：條件為毛利率 ≥ 55%、每 100 ml ≤ $10（中杯價），合理區間 $74～$86。可請學生列成不等式：(p − ${COST}) ÷ p ≥ 0.55 且 p ÷ 8.64 ≤ 10。</div>`);
-  const fb=$('#fb');const qb=$('#qb');if(qb)qb.onclick=back;
+  const fb=$('#fb');const qb=$('#qb');if(qb)qb.onclick=back;condUpd(L.price);
   if(L.solved[L.i]){$('#ps').disabled=true;fb.innerHTML=`<div class="ok">定價 $${L.price} 已通過</div>`;nextBtn();return;}
   $('#ps').onclick=()=>{const p=L.price;
     if(p>=74&&p<=86){L.solved[L.i]=true;att().g.push('$'+p);logAnswer(PRICEQ);$('#ps').disabled=true;const pr=$('#price');if(pr)pr.disabled=true;stampIt('通過',true);gain(30,0,$('#stamp'));
@@ -1045,8 +1058,12 @@ function priceTicket(){const left=showQ();if(!L.solved[L.i])att();
     {const a=att();a.g.push('$'+p);a.dg.push(p===60?'照高度（相似比）定價':p<74?'毛利率不足':'每 100 ml 比中杯貴');}
     L.wrong++;wrongFx();stampIt('否決',false);
     if(p===60)fb.innerHTML=`<div class="bad">這是「只看高度」的定價</div><div>大杯成本是中杯的 1.66 倍，價格卻只多 1.2 倍。回想剛剛算的：容量是 1.728 倍。</div>`;
-    else if(p<74)fb.innerHTML=`<div class="bad">財務長否決</div><div>毛利率低於 55%。試著列式：(售價 − ${COST}) ÷ 售價 ≥ 0.55。</div>`;
-    else fb.innerHTML=`<div class="bad">珍珍搖頭</div><div>每 100 ml 比中杯還貴，她會改買兩杯中杯。試著列式：售價 ÷ 8.64 ≤ 10。</div>`;};
+    else if(p<74)fb.innerHTML=`<div class="bad">財務長否決</div><div>毛利率只有 ${Math.round((p-COST)/p*100)}%，低於 55%。用員工手冊的方法：最低售價＝大杯成本 ÷ 0.45＝${COST} ÷ 0.45 ≈ ？</div>`;
+    else fb.innerHTML=`<div class="bad">珍珍搖頭</div><div>每 100 ml 要 $${(p/8.64).toFixed(1)}，比中杯的 $10 還貴，她會改買兩杯中杯。最高售價＝每 100 ml $10 × 8.64 份＝？</div>`;};
+}
+function condUpd(p){const c1=$('#c1'),c2=$('#c2');if(!c1||!c2)return;const mg=(p-COST)/p,pu=p/8.64;
+  c1.classList.toggle('ok',mg>=.55);c2.classList.toggle('ok',pu<=10);
+  $('#c1v').textContent=`(${p} − ${COST}) ÷ ${p} ≈ ${Math.round(mg*100)}%`;$('#c2v').textContent=`${p} ÷ 8.64 ≈ $${pu.toFixed(1)}`;
 }
 
 /* ================= workbench ================= */
@@ -1081,7 +1098,7 @@ function refreshBench(){const b=$('#bench');if(!b||L.bench==='none')return;
      <div class="meters"><div class="meter"><img class="px" id="f1" alt=""><div style="flex:1;min-width:0"><small>毛利率（中杯 60%）</small><span class="v" id="mg"></span><div class="mbar"><i id="mb1"></i></div><p id="s1"></p></div></div>
      <div class="meter"><img class="px" id="f2" alt=""><div style="flex:1;min-width:0"><small>每 100 ml（中杯 $10）</small><span class="v" id="pu"></span><div class="mbar"><i id="mb2"></i></div><p id="s2"></p></div></div></div>`;
     drawCups($('#cups'),1.2);setLab(1.2);
-    const u=()=>{const p=+$('#price').value;L.price=p;$('#pv2').textContent='$'+p;$('#lp').textContent='$'+p;const ro=$('#ro');if(ro)ro.textContent='$'+p;
+    const u=()=>{const p=+$('#price').value;L.price=p;$('#pv2').textContent='$'+p;$('#lp').textContent='$'+p;const ro=$('#ro');if(ro)ro.textContent='$'+p;condUpd(p);
       const mg=(p-COST)/p,pu=p/8.64,fm=mg>=.55?'happy':mg>=.45?'mid':'sad',cm=pu<=10?'happy':pu<=10.8?'mid':'sad';
       const col=m=>m==='happy'?'#5ec95a':m==='mid'?'#ffd34e':'#e8504a';
       $('#mg').textContent=Math.round(mg*100)+'%';$('#pu').textContent='$'+pu.toFixed(1);
@@ -1105,7 +1122,7 @@ function finish(){commitTime();if(L.id!=='office')return finishZone();
      <div class="tally"><div><small>大杯售價</small><b>$${L.price}</b></div><div><small>首日營收</small><b>$${earn.toLocaleString()}</b></div><div><small>首日毛利</small><b>$${profit.toLocaleString()}</b></div></div>
      <div class="unlock"><div class="md">k²</div><div><b>解鎖配方卡</b><span>面積比＝相似比²</span></div></div>
      ${S.bonus?`<div class="unlock"><div class="md">k³</div><div><b>${newBonus?'三星獎勵・隱藏配方卡':'隱藏配方卡'}</b><span>體積比＝相似比³</span></div></div>`:'<p>拿到三顆星可以解鎖隱藏配方卡。</p>'}
-     <p>本關用時 ${fmtMs(L.stageMs)}，答錯 ${L.wrong} 次（猜猜看不算）。0～1 次三星，2～3 次兩星。<br>總營業時間 ${fmtMs(S.playMs)}・排行榜分數 ${scoreOf()}</p>
+     <p>本關用時 ${fmtMs(L.stageMs)}，答錯 ${L.wrong} 次（猜猜看、練習題不算）。0～1 次三星，2～3 次兩星。<br>總營業時間 ${fmtMs(S.playMs)}・排行榜分數 ${scoreOf()}</p>
      <div class="ov-row" style="justify-content:center"><button class="pbtn" data-primary>回到店面</button><button class="pbtn alt" id="again">再開一次會</button></div></div>`;
     o.querySelectorAll('.bigstars span').forEach((s,i)=>{if(i<stars)setTimeout(()=>{s.classList.add('on');sfx('star');const[x,y]=centerOf(s);burst(x,y,22);},350+i*320);});
     o.querySelector('[data-primary]').onclick=()=>close().then(()=>{sel='office';hub();if(first)setTimeout(()=>toast('解鎖配方卡','面積比＝相似比²','k²'),300);});
@@ -1256,7 +1273,7 @@ function bankHTML(){return ZONES.map(z=>{const lv=LEVELS[z.id];let n=0;
     if(st.t!=='q')return '';n++;
     const choice=st.type==='choice';
     const mis=choice?st.choices.map((c,i)=>i!==st.answer&&st.tags&&st.tags[i]?`${c}${st.cu||''} → ${st.tags[i]}`:'').filter(Boolean):(st.diag||[]).map(d=>`${d[0]}${st.unit?' '+st.unit:''} → ${d[3]||d[1]}`);
-    return `<div class="qb"><div class="h"><b>ORDER ${st.no}</b><span>${st.tag}</span><span>${choice?'選擇題':'填答題'}</span>${st.free?'<span>猜猜看，不計星等</span>':''}</div>
+    return `<div class="qb"><div class="h"><b>ORDER ${st.no}</b><span>${st.tag}</span><span>${choice?'選擇題':'填答題'}</span>${st.free?'<span>猜猜看，不計星等</span>':''}${st.practice?'<span>練習題，不計星等</span>':''}</div>
       <div class="p">${st.prompt}</div>
       ${choice?`<ol type="A">${st.choices.map((c,i)=>`<li class="${i===st.answer?'ok':''}">${c}${st.cu||''}${i===st.answer?'　✓':''}</li>`).join('')}</ol>`:`<div class="a">正解：${st.answer}${st.unit?' '+st.unit:''}</div>`}
       <div class="x">解說：${st.explain}</div>
