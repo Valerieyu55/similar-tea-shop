@@ -369,6 +369,7 @@ button.press:hover,button.press:focus-visible{color:var(--yel-l);animation-durat
   .prog{width:60px}
 }
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+.guestbox{margin-top:16px;padding-top:14px;border-top:2px dashed var(--line,rgba(255,255,255,.18));display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}.guestbox span{font-size:15px;color:var(--fg2)}.guestbox small{flex-basis:100%;font-size:13px;color:var(--fg2);line-height:1.5}
 </style>
 
 <main id="view"></main>
@@ -403,7 +404,7 @@ function line(g,x0,y0,x1,y1,c,t){t=t||1;x0=Math.round(x0);y0=Math.round(y0);x1=M
    ========================================================= */
 const LOG_URL='https://script.google.com/macros/s/AKfycbyv-t6P6Xp_OU6z8AZESkpFU47DX2EPiUcwwnRmdHIQXqJJyc05v6g55Jq_JxGBAyU/exec';
 const KEY='pearl-similar-shop-px1',CUR='pearl-px-cur',SKEY=sid=>'pearl-px-st-'+sid;
-const DEF={name:'',shop:'',xp:0,revenue:3000,rating:80,muted:false,teacher:false,finale:null,bonus:false,day:1,student:null,prog:'',lastSync:0,playMs:0};
+const DEF={name:'',shop:'',xp:0,revenue:3000,rating:80,muted:false,teacher:false,finale:null,bonus:false,day:1,student:null,guest:false,prog:'',lastSync:0,playMs:0};
 const fresh=()=>Object.assign({},DEF,{qs:{},stat:{n:0,f:0},zones:{}});
 const sidOf=st=>st?st.cls+'-'+st.seat:'';
 function loadKey(k){try{const r=localStorage.getItem(k);if(r)return Object.assign(fresh(),JSON.parse(r));}catch(e){}return null;}
@@ -434,7 +435,7 @@ function flush(){const url=logUrl();if(!url||inflight||!S.student||typeof fetch!
    .catch(()=>{inflight=false;clearTimeout(flushT);flushT=setTimeout(flush,20000);});}
 function beaconFlush(){const url=logUrl();if(!url||inflight||!S.student||!navigator.sendBeacon)return;const batch=LQ.slice(0,40);
   try{if(navigator.sendBeacon(url,new Blob([JSON.stringify({v:1,events:batch,summary:summary()})],{type:'text/plain;charset=utf-8'}))){const ids=new Set(batch.map(e=>e.id));LQ=LQ.filter(e=>!ids.has(e.id));saveQ();}}catch(e){}}
-function syncText(){if(!logUrl())return '尚未設定紀錄網址：紀錄只存在這台裝置。';
+function syncText(){if(S.guest)return '訪客模式：進度只存在這台裝置，不會交給老師，也不會上排行榜。';if(!logUrl())return '尚未設定紀錄網址：紀錄只存在這台裝置。';
   return `紀錄會自動上傳給老師（待上傳 ${LQ.length} 筆${S.lastSync?'，上次 '+new Date(S.lastSync).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'}):''}）。`;}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')beaconFlush();});
 setInterval(()=>{if(LQ.length)flush();},60000);setTimeout(flush,2500);
@@ -787,7 +788,7 @@ function titleScreen(){
    <div class="tt-foot">${S.shop?`歡迎回到「${esc(S.shop)}」・ `:''}指導老師：余佳霖老師 ・ Find the value of you!</div></div></section>`);
   titleScene($('#tcv'));
   $('#tch').onclick=teacherLogin;
-  const start=()=>{unlockAudio();sfx('enter');S.student?hub():askName();};$('#go').onclick=start;$('#pst').onclick=start;$('#lbd').onclick=()=>{unlockAudio();showBoard();};
+  const start=()=>{unlockAudio();sfx('enter');(S.student||S.guest)?hub():askName();};$('#go').onclick=start;$('#pst').onclick=start;$('#lbd').onclick=()=>{unlockAudio();showBoard();};
   $('#howto').onclick=()=>{sfx('sel');overlay((o,close)=>{o.innerHTML=`<div class="ovc win paper pad"><div class="ov-k">HOW TO PLAY</div><h2>店長須知</h2>
     <p>・店裡有五個區域，每一區是一個單元任務。<br>・客人會自己進店買飲料，營收會一直累積。<br>・點對話框讓劇情往下走，遇到「訂單」就要解題。<br>・答對會蓋章、得到 EXP 和營收；答錯會看到錯誤診斷。<br>・右邊的工作檯可以拖、可以拉，先玩出直覺再算。<br>・老師從標題畫面的「教師入口」登入後，可以開啟教師模式示範。</p>
     <div class="ov-row"><button class="pbtn" data-primary>知道了</button></div></div>`;o.querySelector('[data-primary]').onclick=()=>close();});};
@@ -804,7 +805,8 @@ function askName(edit,pre){overlay((o,close)=>{let fails=0;
    <label class="fld" for="sh">店名（最多 8 個字）<input type="text" id="sh" maxlength="8" placeholder="${SHOP_IDEAS[0]}" autocomplete="off" value="${esc(pv&&pv.shop!=null?pv.shop:S.shop)}"></label>
    <div class="tags">${SHOP_IDEAS.map(n=>`<button type="button" class="chipbtn idea">${n}</button>`).join('')}</div>
    <p class="err" id="sgE" aria-live="polite"></p>
-   <div class="ov-row"><button class="pbtn" data-primary>${edit?'確定':'簽名上班'}</button><button class="pbtn alt" id="cx">取消</button></div></div>`;
+   <div class="ov-row"><button class="pbtn" data-primary>${edit?'確定':'簽名上班'}</button><button class="pbtn alt" id="cx">取消</button></div>
+   ${edit?'':`<div class="guestbox"><span>家長、校外老師或只是想先看看？</span><button type="button" class="pbtn alt sm" id="gst">訪客試玩</button><small>訪客不用填資料，進度只存在這台裝置，不會交給老師，也不會上排行榜。</small></div>`}</div>`;
   const er=o.querySelector('#sgE'),q=id=>o.querySelector(id),btn=q('[data-primary]');
   const go=async()=>{const shop=(q('#sh').value||'').trim();
     if(edit){S.shop=shop;save();logEv('shop',{note:'店名：'+sname()});sfx('ok');close().then(()=>{hub();toast(`「${sname()}」換上新招牌！`,'','店');});return;}
@@ -820,7 +822,11 @@ function askName(edit,pre){overlay((o,close)=>{let fails=0;
     confirmID(stu,shop,v&&v.net===false);};
   o.querySelectorAll('.idea').forEach(b=>b.onclick=()=>{q('#sh').value=b.textContent;sfx('blip');});
   btn.onclick=go;o.querySelectorAll('input').forEach(x=>x.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go();}});
-  q('#cx').onclick=()=>close();setTimeout(()=>{const f=q(edit?'#sh':'#sgC');f&&f.focus();},80);};
+  q('#cx').onclick=()=>close();
+  const gb=q('#gst');if(gb)gb.onclick=()=>{const shop=(q('#sh').value||'').trim(),m=S.muted;
+    S=fresh();S.guest=true;S.name='訪客店長';S.shop=shop;S.muted=m;try{localStorage.removeItem(CUR);}catch(e){}save();sfx('ok');
+    close().then(()=>{hub();toast('訪客模式','進度只存在這台裝置，不會上傳','訪');});};
+  setTimeout(()=>{const f=q(edit?'#sh':'#sgC');f&&f.focus();},80);};
   const confirmID=(stu,shop,unverified)=>{sfx('sel');
     o.innerHTML=`<div class="ovc win pad clear"><div class="ov-k">CHECK</div><h2>請確認你的身分</h2>
      <div class="idcard"><span>${esc(stu.cls)} 班</span><span>${esc(stu.seat)} 號</span><b>${esc(stu.name)}</b></div>
@@ -835,7 +841,7 @@ function askName(edit,pre){overlay((o,close)=>{let fails=0;
       close().then(()=>{hub();toast(`「${sname()}」開張了！`,prev?'歡迎回來，進度已讀取':'店門口的招牌已經掛上','店');});};
     setTimeout(()=>o.querySelector('[data-primary]').focus(),60);};
   render(pre);});}
-function switchStudent(){flush();try{localStorage.removeItem(CUR);}catch(e){}const m=S.muted;S=fresh();S.muted=m;applyTM();titleScreen();toast('已登出','換下一位同學登入','↺');}
+function switchStudent(){flush();try{localStorage.removeItem(CUR);if(S.guest)localStorage.removeItem(KEY);}catch(e){}const m=S.muted;S=fresh();S.muted=m;applyTM();titleScreen();toast('已登出','換下一位同學登入','↺');}
 
 function hub(){
   {const tz=nextTarget();if(tz)sel=tz.id;}
@@ -849,7 +855,7 @@ function hub(){
      <div class="foot" style="margin-top:12px"><span>${syncText()}<br>五個區域依序解鎖。</span><button class="lnk" id="reset">重設進度</button></div>
    </div>
    <aside class="side">
-     <div class="win"><div class="prof"><img class="px" src="${portrait('you')}" alt=""><div><div class="nm">${esc(pname())}</div><div class="zi-unit">${S.student?esc(S.student.cls)+' 班 '+esc(S.student.seat)+' 號':''}</div><div class="rk" data-h="rank"></div><div class="bigseg"><i data-h="xpw"></i></div><div class="xt" data-h="xpt"></div></div></div><div class="ov-row" style="margin-top:10px"><button class="pbtn alt sm" id="rename">改店名</button><button class="pbtn alt sm" id="swst">換人登入</button></div></div>
+     <div class="win"><div class="prof"><img class="px" src="${portrait('you')}" alt=""><div><div class="nm">${esc(pname())}</div><div class="zi-unit">${S.student?esc(S.student.cls)+' 班 '+esc(S.student.seat)+' 號':S.guest?'訪客模式・不記錄成績':''}</div><div class="rk" data-h="rank"></div><div class="bigseg"><i data-h="xpw"></i></div><div class="xt" data-h="xpt"></div></div></div><div class="ov-row" style="margin-top:10px"><button class="pbtn alt sm" id="rename">改店名</button><button class="pbtn alt sm" id="swst">${S.guest?'改用學生登入':'換人登入'}</button></div></div>
      <div class="win" id="zi"></div>
      <div class="win"><div class="wtitle"><b>配方卡圖鑑</b><small>RECIPES</small></div><div class="cards" id="cards"></div></div>
    </aside></div>`);
