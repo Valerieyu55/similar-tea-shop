@@ -153,7 +153,7 @@ canvas.px,img.px{display:block}
 
 /* order ticket */
 .tk{animation:tkIn .3s steps(4) both;max-width:720px}
-@keyframes tkIn{from{transform:translateY(24px);opacity:0}}
+@keyframes tkIn{from{transform:translateY(24px)}}
 .tk-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:3px dashed #d8c08f;padding-bottom:10px;margin-bottom:12px}
 .tk-no{font-family:var(--f8);font-size:11px;color:var(--red)}
 .tk-tag{font-size:14px;color:var(--paper-mut)}
@@ -222,7 +222,7 @@ body.teacher .tk-ans{display:block}
 /* overlay */
 .ov{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:calc(20px + env(safe-area-inset-top,0px)) var(--gr) calc(20px + env(safe-area-inset-bottom,0px)) var(--gl);background:rgba(8,10,24,.78);overflow:auto;animation:fade .15s steps(3) both}
 .ov.out{animation:fadeOut .15s steps(3) both}
-@keyframes fade{from{opacity:0}}@keyframes fadeOut{to{opacity:0}}
+@keyframes fade{from{background-color:rgba(8,10,24,0)}}@keyframes fadeOut{to{opacity:0}}
 .ovc{width:min(560px,100%);display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 40px);overflow:auto;animation:pop .25s steps(4) both}
 @keyframes pop{from{transform:scale(.85)}}
 .ovc h2{font-size:28px;line-height:1.3}
@@ -533,7 +533,7 @@ function loop(){cxf.clearRect(0,0,cvf.width,cvf.height);parts=parts.filter(p=>p.
 const centerOf=el=>{const r=el.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2];};
 function floatText(x,y,t,cls){const f=E('div','float '+cls,t);f.style.left=x+'px';f.style.top=y+'px';document.body.appendChild(f);setTimeout(()=>f.remove(),1050);}
 function toast(t,sub,m){const el=E('div','toast win',`<div class="md">${m||'★'}</div><div><b>${t}</b>${sub?`<span>${sub}</span>`:''}</div>`);$('#toasts').appendChild(el);setTimeout(()=>el.remove(),2800);}
-function overlay(build){const o=E('div','ov');o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');const close=()=>new Promise(r=>{o.classList.add('out');setTimeout(()=>{o.remove();r();},150);});document.body.appendChild(o);build(o,close);setTimeout(()=>{const p=o.querySelector('[data-primary]');p&&p.focus();},60);return close;}
+function overlay(build){const o=E('div','ov');o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');const close=()=>new Promise(r=>{o.classList.add('out');setTimeout(()=>{o.remove();r();},150);});document.body.appendChild(o);build(o,close);setTimeout(()=>{if(!o.classList.contains('out'))try{o.getAnimations({subtree:true}).forEach(a=>{if(a.animationName!=='blink'&&a.effect&&a.effect.getComputedTiming().iterations!==Infinity)a.finish();});}catch(e){}},500);setTimeout(()=>{const p=o.querySelector('[data-primary]');p&&p.focus();},60);return close;}
 
 /* ================= economy / HUD ================= */
 function gain(xp,rev,anchor){const before=levelOf(S.xp);S.xp+=xp;S.revenue+=rev;save();
