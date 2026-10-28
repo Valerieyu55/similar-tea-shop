@@ -372,6 +372,16 @@ button.press:hover,button.press:focus-visible{color:var(--yel-l);animation-durat
 .guestbox{margin-top:16px;padding-top:14px;border-top:2px dashed var(--line,rgba(255,255,255,.18));display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}.guestbox span{font-size:15px;color:var(--fg2)}.guestbox small{flex-basis:100%;font-size:13px;color:var(--fg2);line-height:1.5}
 .cond{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}.cond li{position:relative;padding:6px 10px 6px 34px;background:rgba(232,80,74,.1);border-left:4px solid #e8504a;font-size:15px;line-height:1.45}.cond li::before{content:'✘';position:absolute;left:10px;top:6px;color:#e8504a}.cond li.ok{background:rgba(94,201,90,.14);border-color:#5ec95a}.cond li.ok::before{content:'✔';color:#3c9a39}.cond b{font-weight:400;margin-right:8px}.cond span{display:block;font-size:13px;opacity:.75}
 .qbz-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}.qbz-h h3{margin:0}.qb .jump{margin-top:8px}.pvtag{color:#ffd34e!important;border-color:#ffd34e!important}
+.diffpick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}.dp{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:#141c44;box-shadow:inset 0 0 0 3px #3b4a8a;color:var(--fg)}.dp b{font-weight:400;font-size:18px;color:var(--yel)}.dp.hard b{color:#ff8f6a}.dp small{font-size:13px;line-height:1.5;color:var(--fg2)}.dp[aria-checked="true"]{box-shadow:inset 0 0 0 3px var(--yel);background:#24306a}.dp.hard[aria-checked="true"]{box-shadow:inset 0 0 0 3px #ff8f6a;background:#3a2440}.dp:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media (max-width:520px){.diffpick{grid-template-columns:1fr}}
+.idd{text-align:center;margin:-4px 0 0}.idd b{font-weight:400;color:var(--yel)}.idd b.hard{color:#ff8f6a}
+.dbadge{display:inline-block;margin-left:8px;padding:0 6px;font-size:12px;font-style:normal;background:#2e3a72;color:var(--yel);vertical-align:2px}.dbadge.hard{background:#5a2a2a;color:#ffb38f}
+.badh{display:inline-block;background:#7a3a1a;color:#ffd3b0;font-size:12px;padding:0 6px;margin-left:4px;vertical-align:2px}
+.tools2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tools2 .pbtn{display:flex;flex-direction:column;align-items:center;gap:2px}.tools2 small{font-size:12px;opacity:.85}
+.bk{display:grid;gap:10px;max-height:58vh;overflow:auto;padding-right:4px}.bkp{position:relative}.bk-z{display:block;font-size:12px;color:var(--paper-mut,#8a6a4a);margin-bottom:2px}.bkp.lock{opacity:.6;filter:grayscale(.6)}.bk-sub{margin-top:-6px}
+.shopl{display:grid;gap:8px}.shi{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#141c44;box-shadow:inset 0 0 0 3px #2e3a72}.shi b{font-weight:400;font-size:17px;color:var(--yel);display:block}.shi small{display:block;font-size:13px;color:var(--fg2);margin:2px 0 4px}.shi.own{opacity:.75}.yel{color:var(--yel);font-weight:400}
+.hv{margin-top:8px;padding:8px 10px;background:#2a1c30;box-shadow:inset 3px 0 0 #ff8f6a}.hv>b{font-weight:400;color:#ff8f6a;font-size:13px}
+.pvd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;color:var(--fg2);font-size:15px}
 </style>
 
 <main id="view"></main>
@@ -406,8 +416,8 @@ function line(g,x0,y0,x1,y1,c,t){t=t||1;x0=Math.round(x0);y0=Math.round(y0);x1=M
    ========================================================= */
 const LOG_URL='https://script.google.com/macros/s/AKfycbyv-t6P6Xp_OU6z8AZESkpFU47DX2EPiUcwwnRmdHIQXqJJyc05v6g55Jq_JxGBAyU/exec';
 const KEY='pearl-similar-shop-px1',CUR='pearl-px-cur',SKEY=sid=>'pearl-px-st-'+sid;
-const DEF={name:'',shop:'',xp:0,revenue:3000,rating:80,muted:false,teacher:false,finale:null,bonus:false,day:1,student:null,guest:false,prog:'',lastSync:0,playMs:0};
-const fresh=()=>Object.assign({},DEF,{qs:{},stat:{n:0,f:0},zones:{}});
+const DEF={name:'',shop:'',xp:0,revenue:3000,rating:80,muted:false,teacher:false,finale:null,bonus:false,day:1,student:null,guest:false,diff:'easy',book:[],deco:[],tickets:0,prog:'',lastSync:0,playMs:0};
+const fresh=()=>Object.assign({},DEF,{qs:{},stat:{n:0,f:0},zones:{},book:[],deco:[]});
 const sidOf=st=>st?st.cls+'-'+st.seat:'';
 function loadKey(k){try{const r=localStorage.getItem(k);if(r)return Object.assign(fresh(),JSON.parse(r));}catch(e){}return null;}
 let S=(()=>{let sid='';try{sid=localStorage.getItem(CUR)||'';}catch(e){}return(sid&&loadKey(SKEY(sid)))||loadKey(KEY)||fresh();})();
@@ -428,8 +438,9 @@ function logEv(type,d){if(PV||!S.student)return;
 const fmtMs=ms=>{const t=Math.round((ms||0)/1000);return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');};
 function firstN(){return QNO.filter(no=>S.qs&&S.qs[no]&&S.qs[no].first).length;}
 function totStars(){return ZONES.reduce((a,z)=>a+zState(z).stars,0);}
-function scoreOf(){return totStars()*100+firstN()*20;}
-function summary(){return{st:S.student,shop:S.shop||'',lv:levelOf(S.xp),xp:S.xp,rev:S.revenue,stars:ZONES.reduce((a,z)=>a+zState(z).stars,0),zs:Object.fromEntries(ZONES.map(z=>[z.id,zState(z).stars])),price:S.finale?S.finale.price:'',bonus:S.bonus,cur:S.prog||'店面營業中',qs:S.qs,stat:S.stat,first:firstN(),ms:S.playMs||0,score:scoreOf()};}
+function scoreOf(){return Math.round((totStars()*100+firstN()*20)*(S.diff==='hard'?1.3:1));}
+const DIFFN={easy:'基礎班',hard:'挑戰班'};
+function summary(){return{st:S.student,shop:S.shop||'',lv:levelOf(S.xp),xp:S.xp,rev:S.revenue,stars:ZONES.reduce((a,z)=>a+zState(z).stars,0),zs:Object.fromEntries(ZONES.map(z=>[z.id,zState(z).stars])),price:S.finale?S.finale.price:'',bonus:S.bonus,cur:S.prog||'店面營業中',diff:S.diff==='hard'?'挑戰':'基礎',qs:S.qs,stat:S.stat,first:firstN(),ms:S.playMs||0,score:scoreOf()};}
 function scheduleFlush(){clearTimeout(flushT);flushT=setTimeout(flush,1500);}
 function flush(){const url=logUrl();if(!url||inflight||!S.student||typeof fetch!=='function')return;
   const batch=LQ.slice(0,40),ids=new Set(batch.map(e=>e.id));inflight=true;
@@ -442,7 +453,7 @@ function syncText(){if(S.guest)return '訪客模式：進度只存在這台裝�
   return `紀錄會自動上傳給老師（待上傳 ${LQ.length} 筆${S.lastSync?'，上次 '+new Date(S.lastSync).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'}):''}）。`;}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')beaconFlush();});
 setInterval(()=>{if(LQ.length)flush();},60000);setTimeout(flush,2500);
-const PRICEQ={no:'05-4',short:'大杯定價',type:'price',prompt:'找出毛利率 ≥ 55% 且每 100 ml 不比中杯貴的大杯售價'};
+const PRICEQ={no:'05-6',short:'大杯定價',type:'price',prompt:'找出毛利率 ≥ 55% 且每 100 ml 不比中杯貴的大杯售價'};
 const pname=()=>S.name||'見習店長';
 const SHOP_IDEAS=['比不比熟成紅茶','1.2嵐','八比和茶','迷比夏','一比日'];
 const sname=()=>S.shop||SHOP_IDEAS[0];
@@ -544,7 +555,7 @@ function hudStats(){return `<span class="stat"><span class="lv">Lv<b data-h="lv"
 function updateHud(){const lv=levelOf(S.xp),a=lvlXP(lv),b=lvlXP(lv+1),pct=Math.min(100,(S.xp-a)/(b-a)*100);
   document.querySelectorAll('[data-h="lv"]').forEach(e=>e.textContent=lv);
   document.querySelectorAll('[data-h="xp"]').forEach(e=>e.style.width=pct+'%');
-  document.querySelectorAll('[data-h="rev"]').forEach(e=>e.textContent='$'+S.revenue.toLocaleString());
+  document.querySelectorAll('[data-h="rev"]').forEach(e=>e.textContent='$'+S.revenue.toLocaleString());document.querySelectorAll('[data-h="rev2"]').forEach(e=>e.textContent=S.revenue.toLocaleString());
   document.querySelectorAll('[data-h="rank"]').forEach(e=>e.textContent=rankOf(lv));
   document.querySelectorAll('[data-h="xpw"]').forEach(e=>e.style.width=pct+'%');
   document.querySelectorAll('[data-h="xpt"]').forEach(e=>e.textContent=`EXP ${S.xp-a}/${b-a}`);}
@@ -643,25 +654,25 @@ function shopScene(cv){const g=cv.getContext('2d');g.imageSmoothingEnabled=false
   const cust=[],pops=[];const HAIR=['#4a2c1d','#1f1714','#c97a3a','#7a4a8a','#e0b060'],SHIRT=['#e8504a','#4a6ad0','#5ec95a','#ff8fab','#ffd34e','#9a6ad0'];
   hubState={cust,pops};
   const spawn=()=>{if(cust.length>=3)return;cust.push({x:116+Math.random()*8,y:150,tx:100+Math.floor(Math.random()*66),ty:113,st:0,w:0,h:HAIR[Math.floor(Math.random()*5)],s:SHIRT[Math.floor(Math.random()*6)]});};
-  const frame=()=>{t++;g.drawImage(bg,0,0);
+  const frame=()=>{t++;g.drawImage(bg,0,0);drawDeco(g,t);
     g.fillStyle='#fff';g.font='8px "Press Start 2P"';g.textAlign='center';g.textBaseline='middle';g.fillStyle=EYE;g.fillText('$',138,67);
     // lamp pools
     g.fillStyle='rgba(255,224,150,'+(.12+.03*Math.sin(t/8))+')';g.fillRect(186,40,30,4);
     // staff behind counter
-    const bob=(t>>3)%2;g.drawImage(walker('#4a2f1c','#f4e6cf',0,'#5ec95a'),128,78+bob);g.drawImage(walker('#4a2c1d','#f4e6cf',0,'#d38d4f'),146,78+((t>>3)+1)%2);
+    const bob=(t>>3)%2;const uni=hasDeco('uniform');g.drawImage(walker('#4a2f1c',uni?'#ffb3c6':'#f4e6cf',0,uni?'#ff8fab':'#5ec95a'),128,78+bob);g.drawImage(walker('#4a2c1d',uni?'#ffb3c6':'#f4e6cf',0,uni?'#ff8fab':'#d38d4f'),146,78+((t>>3)+1)%2);
     // accountant in office
     g.drawImage(walker('#1f1714','#2f5240',0),190,55);
     // customers
-    if(t%70===1)spawn();
+    if(t%(hasDeco('cat')?45:70)===1)spawn();
     cust.sort((a,b)=>a.y-b.y).forEach(p=>{
       if(p.st===0){p.y-=.6;if(p.x<p.tx)p.x+=.4;if(p.x>p.tx)p.x-=.4;if(p.y<=p.ty){p.y=p.ty;p.st=1;}}
-      else if(p.st===1){p.w++;if(p.w===36){pops.push({x:p.x+6,y:p.y-4,t:0});S.revenue+=50;save();updateHud();sfx('coinS');}if(p.w>60)p.st=2;}
+      else if(p.st===1){p.w++;if(p.w===36){const inc=custIncome();pops.push({x:p.x+6,y:p.y-4,t:0,v:inc});S.revenue+=inc;save();updateHud();sfx('coinS');}if(p.w>60)p.st=2;}
       else{p.y+=.7;if(p.y>154)p.dead=1;}
       const f=p.st===1?0:(t>>2)%3;g.drawImage(walker(p.h,p.s,f),Math.round(p.x),Math.round(p.y)-16);
       if(p.st===1&&p.w<36){R(g,p.x+3,p.y-26,8,7,'#fff');R(g,p.x+5,p.y-19,2,2,'#fff');R(g,p.x+5,p.y-24,4,3,'#e09a55');}
     });
     for(let i=cust.length-1;i>=0;i--)if(cust[i].dead)cust.splice(i,1);
-    pops.forEach(p=>{p.t++;const y=Math.round(p.y-p.t*.5);g.fillStyle=OUT;['-1,0','1,0','0,-1','0,1'].forEach(o=>{const[a,b]=o.split(',');g.fillText('+$50',p.x+ +a,y+ +b);});g.fillStyle='#ffd34e';g.fillText('+$50',p.x,y);});
+    pops.forEach(p=>{p.t++;const y=Math.round(p.y-p.t*.5);g.fillStyle=OUT;const lab='+$'+(p.v||50);['-1,0','1,0','0,-1','0,1'].forEach(o=>{const[a,b]=o.split(',');g.fillText(lab,p.x+ +a,y+ +b);});g.fillStyle='#ffd34e';g.fillText(lab,p.x,y);});
     for(let i=pops.length-1;i>=0;i--)if(pops[i].t>40)pops.splice(i,1);
     // finale balloon
     {const tz=nextTarget();if(tz){const bx=Math.round(tz.x+tz.w/2)-7,by=tz.y-26+((t>>3)%2)*2;R(g,bx,by,14,12,'#fff');R(g,bx+5,by+12,4,3,'#fff');R(g,bx+6,by+2,2,6,'#e8504a');R(g,bx+6,by+9,2,2,'#e8504a');}}
@@ -746,12 +757,13 @@ function drawRoom(kind){const[c,g]=mk(192,108);
   if(kind==='brand'){R(g,50,66,40,14,'#e8e2d6');R(g,54,62,32,6,'#c9c2b6');R(g,58,74,24,1,OUT);logoArt(g,100,70,20,10);logoArt(g,124,68,14,12);}
   if(kind==='bar'){[50,70,90,110,130].forEach((x,i)=>{R(g,x,66,9,14,'rgba(255,255,255,.55)');R(g,x+1,70,7,10,['#e09a55','#5ec95a','#ff8fab'][i%3]);R(g,x+6,60,1,8,'#ff8fab');});R(g,150,68,18,12,OUT);R(g,152,70,14,4,'#b8f28c');}
   return c;}
+const SIN=()=>isHard()?17:20;
 function benchExtra(b){
   if(L.bench==='recipe'){const r=L.r;b.innerHTML=`<div class="wtitle"><b>調飲量杯</b><small>WORKBENCH</small></div><div class="cupbox"><canvas class="px" id="bc" width="128" height="76" aria-label="三層飲料量杯"></canvas></div>
-     ${[['t','紅茶','#c97a3a'],['m','鮮奶','#fff3d6'],['s','糖漿','#ffd34e']].map(([k,n,c])=>`<div class="krow"><label for="r${k}"><span class="sw" style="background:${c}"></span>${n}</label><input type="range" id="r${k}" min="1" max="12" step="1" value="${r[k]}"><span class="kv" id="v${k}"></span></div>`).join('')}
+     ${[['t','紅茶','#c97a3a'],['m','鮮奶','#fff3d6'],['s','糖漿','#ffd34e']].map(([k,n,c])=>`<div class="krow"><label for="r${k}"><span class="sw" style="background:${c}"></span>${n}</label><input type="range" id="r${k}" min="1" max="${isHard()?24:12}" step="1" value="${r[k]}"><span class="kv" id="v${k}"></span></div>`).join('')}
      <table class="rt"><tr class="hl"><td>紅茶：鮮奶：糖漿<small>化成最簡整數比</small></td><td id="rr"></td></tr></table><div class="chk"><span id="c1"></span><span id="c2"></span></div>`;
     const u=()=>{['t','m','s'].forEach(k=>{r[k]=+$('#r'+k).value;$('#v'+k).textContent=r[k];});const gg=gcd(gcd(r.t,r.m),r.s);$('#rr').textContent=`${r.t/gg}：${r.m/gg}：${r.s/gg}`;
-      const ok1=r.t*2===r.m*3,ok2=r.m===r.s*4;$('#c1').className=ok1?'on':'';$('#c2').className=ok2?'on':'';$('#c1').textContent=(ok1?'✓ ':'✗ ')+'紅茶：鮮奶＝3：2';$('#c2').textContent=(ok2?'✓ ':'✗ ')+'鮮奶：糖漿＝4：1';drawRecipe($('#bc'),r);};
+      const H=isHard(),ok1=H?r.t*3===r.m*5:r.t*2===r.m*3,ok2=r.m===r.s*4;$('#c1').className=ok1?'on':'';$('#c2').className=ok2?'on':'';$('#c1').textContent=(ok1?'✓ ':'✗ ')+(H?'紅茶：鮮奶＝5：3':'紅茶：鮮奶＝3：2');$('#c2').textContent=(ok2?'✓ ':'✗ ')+'鮮奶：糖漿＝4：1';drawRecipe($('#bc'),r);};
     ['t','m','s'].forEach(k=>$('#r'+k).oninput=()=>{u();sfx('blip');});u();return true;}
   if(L.bench==='tri'){b.innerHTML=`<div class="wtitle"><b>A 字立牌模型</b><small>WORKBENCH</small></div><div class="cupbox"><canvas class="px" id="bc" width="128" height="76" aria-label="三角形立牌與平行木條"></canvas></div>
      <div class="krow"><label for="ad">AD 長</label><input type="range" id="ad" min="10" max="90" step="5" value="${L.ad}"><span class="kv" id="adv"></span></div>
@@ -763,17 +775,18 @@ function benchExtra(b){
      <div class="krow"><label for="lw">寬</label><input type="range" id="lw" min="2" max="16" step="0.5" value="${L.lw}"><span class="kv" id="lwv"></span></div>
      <div class="krow"><label for="lh">高</label><input type="range" id="lh" min="1.5" max="12" step="0.5" value="${L.lh}"><span class="kv" id="lhv"></span></div>
      <div class="ov-row" style="margin-top:8px"><button type="button" class="chipbtn" id="lk" aria-pressed="${L.lock}">鎖定比例</button></div>
-     <table class="rt"><tr><td>寬放大幾倍<small>原圖寬 4 cm</small></td><td id="g1"></td></tr><tr><td>高放大幾倍<small>原圖高 3 cm</small></td><td id="g2"></td></tr></table><div class="chk"><span id="vd"></span></div>`;
+     <table class="rt"><tr><td>寬放大幾倍<small>原圖寬 ${isHard()?6:4} cm</small></td><td id="g1"></td></tr><tr><td>高放大幾倍<small>原圖高 ${isHard()?4:3} cm</small></td><td id="g2"></td></tr></table><div class="chk"><span id="vd"></span></div>`;
+    const OW=isHard()?6:4,OH=isHard()?4:3;
     const u=src=>{let w=+$('#lw').value,h=+$('#lh').value;
-      if(L.lock){if(src==='h'){h=Math.max(1.5,Math.round(h/1.5)*1.5);w=h/.75;}else{w=Math.max(2,Math.round(w/2)*2);h=w*.75;}$('#lw').value=w;$('#lh').value=h;}
-      L.lw=w;L.lh=h;$('#lwv').textContent=w+'cm';$('#lhv').textContent=h+'cm';$('#g1').textContent='×'+(+(w/4).toFixed(3));$('#g2').textContent='×'+(+(h/3).toFixed(3));
-      const ok=Math.abs(w*3-h*4)<.01;$('#vd').className=ok?'on':'';$('#vd').textContent=ok?'✓ 和原圖相似':'✗ 變形了：寬和高放大的倍數不同';drawLogo($('#bc'),w,h);};
+      if(L.lock){if(src==='h'){w=+(h*OW/OH).toFixed(2);}else{h=+(w*OH/OW).toFixed(2);}$('#lw').value=w;$('#lh').value=h;}
+      L.lw=w;L.lh=h;$('#lwv').textContent=w+'cm';$('#lhv').textContent=h+'cm';$('#g1').textContent='×'+(+(w/OW).toFixed(3));$('#g2').textContent='×'+(+(h/OH).toFixed(3));
+      const ok=Math.abs(w*OH-h*OW)<.01;$('#vd').className=ok?'on':'';$('#vd').textContent=ok?'✓ 和原圖相似':'✗ 變形了：寬和高放大的倍數不同';drawLogo($('#bc'),w,h);};
     $('#lw').oninput=()=>{u('w');sfx('blip');};$('#lh').oninput=()=>{u('h');sfx('blip');};
     $('#lk').onclick=e=>{L.lock=!L.lock;e.currentTarget.setAttribute('aria-pressed',String(L.lock));sfx('sel');u('w');};u();return true;}
   if(L.bench==='straw'){b.innerHTML=`<div class="wtitle"><b>吸管測量台</b><small>WORKBENCH</small></div><div class="cupbox"><canvas class="px" id="bc" width="128" height="76" aria-label="杯子剖面與斜插的吸管"></canvas></div>
-     <div class="krow"><label for="sl">吸管全長</label><input type="range" id="sl" min="20" max="32" step="1" value="${L.sl}"><span class="kv" id="slv"></span></div>
-     <table class="rt"><tr><td>杯內的吸管<small>杯高 16、杯口 12</small></td><td>20cm</td></tr><tr><td>露出杯口的吸管</td><td id="s1"></td></tr><tr class="hl"><td>大三角形 高：斜邊</td><td>16：20</td></tr><tr class="hl"><td>小三角形 高：斜邊</td><td id="s2"></td></tr></table>`;
-    const u=()=>{const l=+$('#sl').value;L.sl=l;$('#slv').textContent=l+'cm';$('#s1').textContent=(l-20)+'cm';$('#s2').textContent=`?：${l-20}`;drawStraw($('#bc'),l-20);};
+     <div class="krow"><label for="sl">吸管全長</label><input type="range" id="sl" min="${SIN()}" max="${SIN()+12}" step="1" value="${Math.max(L.sl,SIN())}"><span class="kv" id="slv"></span></div>
+     <table class="rt"><tr><td>杯內的吸管<small>${isHard()?'杯高 15、杯口 8':'杯高 16、杯口 12'}</small></td><td>${SIN()}cm</td></tr><tr><td>露出杯口的吸管</td><td id="s1"></td></tr><tr class="hl"><td>${isHard()?'大三角形 水平：斜邊':'大三角形 高：斜邊'}</td><td>${isHard()?'8：17':'16：20'}</td></tr><tr class="hl"><td>${isHard()?'小三角形 水平：斜邊':'小三角形 高：斜邊'}</td><td id="s2"></td></tr></table>`;
+    const u=()=>{const l=+$('#sl').value;L.sl=l;$('#slv').textContent=l+'cm';$('#s1').textContent=(l-SIN())+'cm';$('#s2').textContent=`?：${l-SIN()}`;drawStraw($('#bc'),Math.min(12,l-SIN()));};
     $('#sl').oninput=()=>{u();sfx('blip');};u();return true;}
   return false;}
 
@@ -799,12 +812,15 @@ function titleScreen(){if(PV){S=PV.S;PV=null;L=null;}
 async function verifyLogin(stu){if(!logUrl())return{ok:true};
   try{const r=await fetch(logUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'verify',cls:stu.cls,seat:stu.seat,name:stu.name})});const d=await r.json();return d;}
   catch(e){return{ok:true,net:false};}}
-function askName(edit,pre){overlay((o,close)=>{let fails=0;
-  const render=pv=>{const st=pv||S.student||{};
+function askName(edit,pre){overlay((o,close)=>{let fails=0,dsel='';
+  const render=pv=>{const st=pv||S.student||{};if(pv&&pv.diff)dsel=pv.diff;
   o.innerHTML=`<div class="ovc win pad"><div class="ov-k">${edit?'EDIT':'NEW STAFF'}</div><h2>${edit?'修改店名':'登記上班，開一間你的店！'}</h2>
    <p>${edit?`${esc(st.cls||'')} 班 ${esc(st.seat||'')} 號 ${esc(S.name)}。改好按「確定」，招牌會跟著換。`:'請照學校名冊填寫班級、座號和姓名，系統會核對名單，你的經營紀錄會交給老師。'}</p>
    ${edit?'':`<div class="signrow"><label class="fld" for="sgC">班級<input type="text" id="sgC" maxlength="4" inputmode="numeric" placeholder="例如 901" autocomplete="off" value="${esc(st.cls||'')}"></label><label class="fld" for="sgS">座號<input type="text" id="sgS" maxlength="3" inputmode="numeric" placeholder="例如 5" autocomplete="off" value="${esc(st.seat?+st.seat:'')}"></label></div>
    <label class="fld" for="nm">姓名（中文全名）<input type="text" id="nm" maxlength="12" placeholder="例如 王小明" autocomplete="off" value="${esc(st.name||'')}"></label>`}
+   ${edit?'':`<div class="fld"><span>難易度（之後重新登入可以換）</span><div class="diffpick" role="radiogroup" aria-label="難易度">
+     <button type="button" class="dp" role="radio" data-d="easy" aria-checked="${dsel==='easy'}"><b>基礎班</b><small>數字比較整齊，提示免費。適合第一次學。</small></button>
+     <button type="button" class="dp hard" role="radio" data-d="hard" aria-checked="${dsel==='hard'}"><b>挑戰班</b><small>數字更刁鑽、要多想一步；看提示要用提示券。分數 ×1.3</small></button></div></div>`}
    <label class="fld" for="sh">店名（最多 8 個字）<input type="text" id="sh" maxlength="8" placeholder="${SHOP_IDEAS[0]}" autocomplete="off" value="${esc(pv&&pv.shop!=null?pv.shop:S.shop)}"></label>
    <div class="tags">${SHOP_IDEAS.map(n=>`<button type="button" class="chipbtn idea">${n}</button>`).join('')}</div>
    <p class="err" id="sgE" aria-live="polite"></p>
@@ -817,30 +833,32 @@ function askName(edit,pre){overlay((o,close)=>{let fails=0;
     if(!/^\d{3,4}$/.test(cls)){er.textContent='班級請填數字，例如 901。';q('#sgC').focus();return;}
     if(!seat||+seat<1||+seat>60){er.textContent='座號請填數字，例如 5。';q('#sgS').focus();return;}
     if(!/^[一-鿿·]{2,6}$/.test(name)){er.textContent='姓名請填中文全名，不要有空格、英文或符號。';q('#nm').focus();return;}
+    if(!dsel){er.textContent='請選擇難易度：基礎班或挑戰班。';sfx('bad');return;}
     const stu={cls,seat:String(+seat).padStart(2,'0'),name};
     btn.disabled=true;btn.textContent='核對名單中…';er.textContent='';
     const v=await verifyLogin(stu);btn.disabled=false;btn.textContent='簽名上班';
     if(v&&v.ok===false&&v.why){fails++;sfx('bad');
       er.textContent=({cls:`找不到「${cls}」班，請確認班級。`,seat:`${cls} 班沒有 ${+seat} 號，請確認座號。`,name:`${cls} 班 ${+seat} 號的姓名對不上，請檢查有沒有打錯字。`})[v.why]+(fails>=3?'還是不行的話，請舉手請老師協助。':'');return;}
-    confirmID(stu,shop,v&&v.net===false);};
+    confirmID(stu,shop,v&&v.net===false,dsel);};
   o.querySelectorAll('.idea').forEach(b=>b.onclick=()=>{q('#sh').value=b.textContent;sfx('blip');});
+  o.querySelectorAll('.dp').forEach(b=>b.onclick=()=>{dsel=b.dataset.d;sfx('blip');o.querySelectorAll('.dp').forEach(x=>x.setAttribute('aria-checked',String(x===b)));er.textContent='';});
   btn.onclick=go;o.querySelectorAll('input').forEach(x=>x.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go();}});
   q('#cx').onclick=()=>close();
   const gb=q('#gst');if(gb)gb.onclick=()=>{const shop=(q('#sh').value||'').trim(),m=S.muted;
-    S=fresh();S.guest=true;S.name='訪客店長';S.shop=shop;S.muted=m;try{localStorage.removeItem(CUR);}catch(e){}save();sfx('ok');
+    S=fresh();S.guest=true;S.name='訪客店長';S.shop=shop;S.muted=m;S.diff=dsel||'easy';try{localStorage.removeItem(CUR);}catch(e){}save();sfx('ok');
     close().then(()=>{hub();toast('訪客模式','進度只存在這台裝置，不會上傳','訪');});};
   setTimeout(()=>{const f=q(edit?'#sh':'#sgC');f&&f.focus();},80);};
-  const confirmID=(stu,shop,unverified)=>{sfx('sel');
+  const confirmID=(stu,shop,unverified,diff)=>{sfx('sel');
     o.innerHTML=`<div class="ovc win pad clear"><div class="ov-k">CHECK</div><h2>請確認你的身分</h2>
-     <div class="idcard"><span>${esc(stu.cls)} 班</span><span>${esc(stu.seat)} 號</span><b>${esc(stu.name)}</b></div>
+     <div class="idcard"><span>${esc(stu.cls)} 班</span><span>${esc(stu.seat)} 號</span><b>${esc(stu.name)}</b></div><p class="idd">難易度：<b class="${diff==='hard'?'hard':''}">${DIFFN[diff]}</b></p>
      <p>這是你本人嗎？確認後這些資料會交給老師，之後不能自己修改。</p>
      <div class="ov-row" style="justify-content:center"><button class="pbtn" data-primary>是，開始營業</button><button class="pbtn alt" id="no">不是，重新填寫</button></div></div>`;
-    o.querySelector('#no').onclick=()=>{sfx('sel');render(Object.assign({},stu,{shop}));};
+    o.querySelector('#no').onclick=()=>{sfx('sel');render(Object.assign({},stu,{shop,diff}));};
     o.querySelector('[data-primary]').onclick=()=>{
       const sid=sidOf(stu),prev=loadKey(SKEY(sid)),mute=S.muted;
-      S=prev||fresh();S.student=stu;S.name=stu.name;if(shop||!prev)S.shop=shop;if(!prev)S.muted=mute;save();
+      S=prev||fresh();S.student=stu;S.name=stu.name;if(shop||!prev)S.shop=shop;if(!prev)S.muted=mute;S.diff=diff||'easy';save();
       try{localStorage.setItem(CUR,sid);}catch(e){}
-      logEv('login',{note:(prev?'回到遊戲':'第一次登入')+(unverified?'（連線失敗，名單未即時核對）':'')});sfx('ok');
+      logEv('login',{note:(prev?'回到遊戲':'第一次登入')+'・'+DIFFN[S.diff]+(unverified?'（連線失敗，名單未即時核對）':'')});sfx('ok');
       close().then(()=>{hub();toast(`「${sname()}」開張了！`,prev?'歡迎回來，進度已讀取':'店門口的招牌已經掛上','店');});};
     setTimeout(()=>o.querySelector('[data-primary]').focus(),60);};
   render(pre);});}
@@ -858,12 +876,13 @@ function hub(){if(PV){exitPreview();return;}
      <div class="foot" style="margin-top:12px"><span>${syncText()}<br>五個區域依序解鎖。</span><button class="lnk" id="reset">重設進度</button></div>
    </div>
    <aside class="side">
-     <div class="win"><div class="prof"><img class="px" src="${portrait('you')}" alt=""><div><div class="nm">${esc(pname())}</div><div class="zi-unit">${S.student?esc(S.student.cls)+' 班 '+esc(S.student.seat)+' 號':S.guest?'訪客模式・不記錄成績':''}</div><div class="rk" data-h="rank"></div><div class="bigseg"><i data-h="xpw"></i></div><div class="xt" data-h="xpt"></div></div></div><div class="ov-row" style="margin-top:10px"><button class="pbtn alt sm" id="rename">改店名</button><button class="pbtn alt sm" id="swst">${S.guest?'改用學生登入':'換人登入'}</button></div></div>
+     <div class="win"><div class="prof"><img class="px" src="${portrait('you')}" alt=""><div><div class="nm">${esc(pname())}</div><div class="zi-unit">${S.student?esc(S.student.cls)+' 班 '+esc(S.student.seat)+' 號':S.guest?'訪客模式・不記錄成績':''}<span class="dbadge${isHard()?' hard':''}">${DIFFN[S.diff]||'基礎班'}</span></div><div class="rk" data-h="rank"></div><div class="bigseg"><i data-h="xpw"></i></div><div class="xt" data-h="xpt"></div></div></div><div class="ov-row" style="margin-top:10px"><button class="pbtn alt sm" id="rename">改店名</button><button class="pbtn alt sm" id="swst">${S.guest?'改用學生登入':'換人登入'}</button></div></div>
+     <div class="win"><div class="wtitle"><b>店長工具</b><small>TOOLS</small></div><div class="tools2"><button class="pbtn sm" id="shopB">店長採購單<small>營收 $<span data-h="rev2"></span></small></button><button class="pbtn alt sm" id="bookB">員工手冊<small>${(S.book||[]).length}／${allNotes().length} 頁</small></button></div></div>
      <div class="win" id="zi"></div>
      <div class="win"><div class="wtitle"><b>配方卡圖鑑</b><small>RECIPES</small></div><div class="cards" id="cards"></div></div>
    </aside></div>`);
   $('#hudr').append(hudButtons());{const lb=E('button','chipbtn','排行榜');lb.type='button';lb.onclick=()=>{sfx('sel');showBoard();};$('#hudr').prepend(lb);}{const tb=E('button','chipbtn','◀ 標題');tb.type='button';tb.onclick=()=>{sfx('sel');titleScreen();};$('#hudr').prepend(tb);}updateHud();shopScene($('#scv'));zinfo();cards();
-  $('#rename').onclick=()=>{sfx('sel');askName(true);};$('#swst').onclick=()=>{sfx('sel');switchStudent();};
+  $('#rename').onclick=()=>{sfx('sel');askName(true);};$('#shopB').onclick=shopView;$('#bookB').onclick=bookView;$('#swst').onclick=()=>{sfx('sel');switchStudent();};
   document.querySelectorAll('.zone').forEach(b=>b.onclick=()=>{sel=b.dataset.id;sfx('sel');document.querySelectorAll('.zone').forEach(x=>x.classList.toggle('sel',x===b));zinfo();});
   let arm=false;$('#reset').onclick=e=>{if(!arm){arm=true;e.target.textContent='再按一次確認重設';setTimeout(()=>{arm=false;e.target.textContent='重設進度';},3000);return;}
     const st=S.student,nm=S.name,sh=S.shop,m=S.muted;logEv('reset',{note:'重設這台裝置的進度'});S=fresh();S.student=st;S.name=nm;S.shop=sh;S.muted=m;save();hub();toast('已重設進度','回到開店第一天','R');};
@@ -970,12 +989,80 @@ const LEVELS={
    explain:'毛利 50 − 20＝$30，毛利率＝30 ÷ 50＝60%。每賣 $50，有 $30 是店裡賺的。',ans:'60%。練習題，答錯不影響星等。'}),
   say('fin','財務室的規定：大杯的毛利率不能低於 <b>55%</b>。毛利率 55%，就是成本最多只能占售價的 45%。'),
   note('用毛利率反推最低售價','毛利率 ≥ 55% ⇔ 成本 ÷ 售價 ≤ 45%<br>所以 最低售價＝成本 ÷ 0.45','例：中杯成本 $20 → 售價至少 20 ÷ 0.45 ≈ $44.4。大杯成本請看工作檯的成本表。'),
-  say('cus','還有我！大杯每 100 ml 不能比中杯貴喔。中杯 500 ml 賣 $50，每 100 ml 是 $10；大杯有 864 ml。'),
-  say('fin','兩個條件都要過。{name}，工作檯上有成本表和兩個儀表，你來定價。'),
+  Q({no:'05-4',short:'大杯最低售價',tag:'經濟・毛利率',xp:20,rev:30,unit:'元',answer:74,tol:.01,prompt:'大杯成本 $33.12。毛利率要 ≥ 55%，用「最低售價＝成本 ÷ 0.45」算出大杯最低售價。（整數元：不夠就要進位）',
+   diag:[[73.6,'差一步：取整數','33.12 ÷ 0.45 ≈ 73.6，價錢要整數元；賣 $73 毛利率不到 55%，所以要進位成 $74。','沒有處理取整數'],[73,'捨去就不夠了','賣 $73 時毛利率約 54.6%，低於 55%，要往上進位。','取整數方向錯誤'],[14.9,'乘錯了','成本 ÷ 0.45，不是成本 × 0.45。','乘除弄反'],[15,'乘錯了','成本 ÷ 0.45，不是成本 × 0.45。','乘除弄反'],[60.2,'用了 0.55','0.55 是毛利率，成本占售價的比例是 1 − 0.55＝0.45。','用毛利率去除'],[61,'用了 0.55','0.55 是毛利率，成本占售價的比例是 1 − 0.55＝0.45。','用毛利率去除'],[51.3,'把毛利率加在成本上','33.12 × 1.55 是「加成」，毛利率是用售價算的。','把毛利率當成本加成']],
+   miss:'最低售價＝成本 ÷ 0.45，再看要進位還是捨去。',hint:'33.12 ÷ 0.45 ≈ 73.6。賣 $73 夠不夠？',
+   explain:'33.12 ÷ 0.45 ≈ 73.6，售價至少 $74（賣 $73 毛利率只有 54.6%）。',ans:'$74（33.12 ÷ 0.45 ≈ 73.6，進位）。'}),
+  say('cus','還有我！大杯每 100 ml 不能比中杯貴喔。'),
+  Q({no:'05-5',short:'大杯最高售價',tag:'經濟・單價',xp:20,rev:30,unit:'元',answer:86,tol:.01,prompt:'中杯每 100 ml 是 $10。大杯 864 ml＝8.64 個 100 ml。用「最高售價＝$10 × 8.64」算出大杯最高售價。（整數元：超過就不行，要捨去）',
+   diag:[[86.4,'差一步：取整數','10 × 8.64＝86.4，價錢要整數元；賣 $87 就比中杯貴，所以捨去成 $86。','沒有處理取整數'],[87,'超過了','賣 $87 時每 100 ml ≈ $10.07，比中杯貴，要捨去。','取整數方向錯誤'],[60,'只照高度乘 1.2','大杯不是只高 1.2 倍，容量是 1.728 倍。','用相似比定價'],[72,'用了面積比','容量要用體積比 1.728，不是面積比 1.44。','用面積比定價'],[864,'單位換錯','864 ml 是 8.64 個 100 ml，不是 864 個。','單位換算錯誤']],
+   miss:'最高售價＝每 100 ml 的價錢 × 幾個 100 ml。',hint:'10 × 8.64＝86.4。賣 $87 會不會比中杯貴？',
+   explain:'10 × 8.64＝86.4，售價最多 $86（賣 $87 每 100 ml 就超過 $10）。',ans:'$86（10 × 8.64＝86.4，捨去）。'}),
+  say('fin','最低 $74、最高 $86。{name}，請在這個範圍裡提出大杯的定價，工作檯會幫你驗算。'),
   wb('price'),
   PR(),
   say('cus','每 100 ml 比中杯便宜，我明天一定點大杯！店長，你請到一個好幫手了！')]}
 };
+/* ---------- 挑戰班（hard）版本：同一題號，換更刁鑽的數字或多一步 ---------- */
+const HARD={
+ '01-1':{prompt:'紅茶：鮮奶＝5：3，鮮奶：糖漿＝4：1。紅茶：鮮奶：糖漿＝？',choices:['5：3：1','20：12：3','5：4：1','20：12：1'],answer:1,
+   tags:['沒有統一共同項','','直接拼湊兩個比','只放大其中一個比'],
+   why:['鮮奶在兩個比裡是 3 和 4，要先變成同一個數（12），不能直接接上糖漿 1。','','5：4：1 是把兩個比的數字拼在一起，紅茶：鮮奶就變成 5：4 了。','紅茶：鮮奶放大成 20：12 沒錯，可是鮮奶：糖漿也要放大成 12：3。'],
+   explain:'鮮奶的 3 和 4 取最小公倍數 12：5：3＝20：12，4：1＝12：3，所以是 20：12：3。',ans:'20：12：3。共同項 3 和 4 要統一成 12。'},
+ '01-2':{prompt:'每杯 700 ml，紅茶：鮮奶：糖漿＝20：12：3。做 15 杯，總共要準備多少 ml <b>鮮奶</b>？',answer:3600,tol:.5,dtol:1,
+   diag:[[240,'只算了一杯','240 ml 是一杯的鮮奶量，訂單有 15 杯。','只算了一杯'],[3937.5,'總份數少算了','20＋12＋3＝35 份，糖漿也要算進去。','總份數算錯'],[6000,'算成紅茶了','紅茶占 20 份，題目問的是鮮奶（12 份）。','對應項弄錯'],[3500,'以為三種一樣多','三種原料是 20：12：3，不是平分。','以為三種平分']],
+   miss:'先算 15 杯總共幾 ml，再看鮮奶占全部的幾份。',hint:'20＋12＋3＝35 份。15 杯共 10500 ml，每份幾 ml？',
+   explain:'15 × 700＝10500 ml，共 35 份，每份 300 ml。鮮奶 12 份＝3600 ml。',ans:'10500 × 12/35＝3600 ml。'},
+ '02-1':{prompt:'立牌底邊 BC＝90 cm。D、E 是 AB、AC 的中點；F、G 又是 AD、AE 的中點。最上面那根木條 FG 長幾 cm？',answer:22.5,tol:.01,
+   diag:[[45,'只用了一次中點連線','45 cm 是 DE。FG 在三角形 ADE 裡，還要再取一次一半。','只用一次中點連線'],[30,'以為三等分','中點連線是「一半」，不是三等分。','以為三等分'],[90,'以為和底邊一樣長','FG 在最上面，比 BC 短很多。','以為和底邊等長']],
+   miss:'先在三角形 ABC 用一次中點連線，再到三角形 ADE 用一次。',hint:'DE＝BC 的一半。FG 又是 DE 的幾分之幾？',
+   explain:'DE＝90 ÷ 2＝45 cm；F、G 是 AD、AE 中點，FG＝45 ÷ 2＝22.5 cm。',ans:'22.5 cm（連用兩次中點連線性質）。'},
+ '02-2':{prompt:'AB＝100 cm，AC＝90 cm。木條 DE ∥ BC，量得 DB＝35 cm。EC 要多長？',answer:31.5,tol:.01,dtol:.1,
+   diag:[[35,'以為 EC＝DB','兩邊長度不同（100 和 90），被截出的長度也不同，是「比」一樣。','以為對應線段相等'],[58.5,'算成 AE 了','58.5 cm 是 AE，題目問的是 EC。','對應線段弄錯'],[38.9,'比例倒過來','EC 應該比 DB 短（AC 比 AB 短）。','比例方向反了']],
+   miss:'DE ∥ BC 時，AD：DB＝AE：EC。先求 AD。',hint:'AD＝100 − 35＝65。AD：DB＝65：35＝13：7，把 AC＝90 也分成 13：7。',
+   explain:'AD＝65，AD：DB＝65：35。EC＝90 × 35/100＝31.5 cm。',ans:'31.5 cm。90 × 35/100。'},
+ '03-1':{prompt:'原圖 LOGO 寬 6 cm、高 4 cm。哪一張樣稿和原圖<b>不相似</b>？',choices:['寬 15、高 10','寬 4.5、高 3','寬 9、高 7','寬 21、高 14'],answer:2,
+   tags:['誤判相似的長方形','以為縮小不算相似','','誤判相似的長方形'],
+   why:['15：10＝3：2＝6：4，寬和高都放大 2.5 倍，是相似的。','4.5：3＝3：2，寬和高都縮成 0.75 倍，縮小也算相似。','','21：14＝3：2，都放大 3.5 倍，是相似的。'],
+   explain:'6：4＝3：2。9：7 ≠ 3：2，高應該是 6 才相似。',ans:'寬 9、高 7。'},
+ '03-2':{prompt:'LOGO 原圖寬 4 cm、高 3 cm。招牌上的 LOGO <b>高 1.35 m</b>，要和原圖相似，寬要幾 <b>cm</b>？',answer:180,tol:.01,
+   diag:[[1.8,'單位沒換','1.8 是公尺，題目要公分：1.8 m＝180 cm。','單位沒換算'],[101.25,'寬高對調了','高對應的是原圖的 3，不是 4。','對應邊弄反'],[136,'用加的放大','相似要乘同一個倍數，不能用加的。','用加法放大'],[1.0125,'寬高對調又沒換單位','先把 1.35 m 換成 135 cm，再用高對高。','對應邊弄反']],
+   miss:'先換成公分，再算高放大了幾倍。',hint:'1.35 m＝135 cm。135 ÷ 3＝？　寬也要乘這個倍數。',
+   explain:'1.35 m＝135 cm，135 ÷ 3＝45 倍，寬＝4 × 45＝180 cm。',ans:'180 cm。陷阱：單位、對應邊。'},
+ '04-1':{prompt:'下列哪一組條件「<b>不能</b>」判定兩個三角形相似？',choices:['兩組對應角相等','三組對應邊成比例','兩組對應邊成比例，且夾角相等','兩組對應邊成比例，且其中一邊的對角相等'],answer:3,
+   tags:['以為 AA 不能判定','以為 SSS 不能判定','以為 SAS 不能判定',''],
+   why:['兩組角相等，第三個角也一定相等，這是 AA 相似。','三組邊都成比例，就是 SSS 相似。','兩邊成比例且夾角相等，就是 SAS 相似。',''],
+   explain:'相似判定只有 AA、SAS、SSS。「兩邊成比例＋其中一邊的對角」不是夾角，可能畫出兩種不同形狀的三角形，不能判定。',ans:'D（不是夾角，不能判定）。'},
+ '04-2':{prompt:'另一款杯子：杯高 15 cm、杯口直徑 8 cm，吸管斜放在杯內的長度是 17 cm。吸管全長 21 cm，露出杯口部分的<b>水平距離</b>是幾 cm？（四捨五入到小數第二位）',answer:1.88,tol:.01,dtol:.02,
+   diag:[[3.53,'算成垂直高度','3.53 cm 是露出部分的高，題目問水平距離（對應杯口 8 cm）。','對應邊弄錯'],[4,'把露出長度當成水平距離','4 cm 是斜邊，水平距離比斜邊短。','把斜邊當成水平距離'],[2.13,'用錯了分母','水平：斜邊＝8：17，不是 8：15。','對應邊弄錯'],[1.89,'四捨五入要看第三位','4 × 8 ÷ 17＝1.882…，四捨五入是 1.88。','進位錯誤']],
+   miss:'露出的小三角形和杯內的大三角形相似，水平：斜邊要一樣。',hint:'露出長 21 − 17＝4 cm。大三角形 水平：斜邊＝8：17。',
+   explain:'露出 4 cm。水平：斜邊＝8：17，水平距離＝4 × 8/17 ≈ 1.88 cm。',ans:'1.88 cm。'},
+ '05-1':{type:'num',unit:'倍',answer:1.728,tol:.002,prompt:'大杯每個長度都是中杯的 1.2 倍。大杯能裝的飲料，是中杯的幾倍？（直接填數字）',
+   diag:[[1.2,'以為容量比＝相似比','1.2 只是高度的倍數，杯口也變大了。','以為容量比＝相似比'],[1.44,'以為容量比＝面積比','1.44 是杯口面積的倍數，杯子還多了 1.2 倍的高度。','以為容量比＝面積比'],[2.4,'以為放大＝加倍','相似圖形的放大不是用加倍來算。','以為放大＝加倍']],miss:'長、寬、高三個方向都放大了。'},
+ '05-2':{prompt:'中杯封膜面積是 64 cm²。大杯杯口直徑是中杯的 1.2 倍，大杯封膜面積是幾 cm²？（填到小數第二位）',unit:'cm²',answer:92.16,tol:.01,dtol:.02,
+   diag:[[76.8,'這是店長的陷阱','64 × 1.2 是把相似比當面積比，面積要乘 1.2²。','把相似比當面積比'],[153.6,'乘了 2，不是平方','面積比是 1.2 × 1.2＝1.44，不是 1.2 × 2。','把平方當成乘 2'],[110.59,'用了體積比','封膜是面積，乘 1.2² 就好，不是 1.2³。','面積比用成體積比'],[1.44,'只算了倍數','1.44 是面積比，還要乘中杯的 64 cm²。','只算出倍數']],
+   miss:'先求面積比，再乘中杯的封膜面積。',hint:'面積比＝1.2²＝1.44。64 × 1.44＝？',
+   explain:'面積比 1.2²＝1.44，大杯封膜＝64 × 1.44＝92.16 cm²。',ans:'92.16 cm²。'},
+ '05-3':{prompt:'季節限定杯賣 $65，成本 $20.8。它的毛利率是多少 %？',answer:68,tol:.01,
+   diag:[[44.2,'這是毛利，還沒除','$44.2 是毛利，還要除以售價 $65。','只算毛利沒除以售價'],[32,'這是成本占售價的比例','20.8 ÷ 65＝32% 是成本占幾成。','用成本除以售價'],[212.5,'除錯對象了','毛利率是除以售價，不是除以成本。','除以成本'],[0.68,'差一步：換成百分率','0.68＝68%。','沒換成百分率']],
+   hint:'毛利＝65 − 20.8＝44.2。44.2 ÷ 65＝？',explain:'毛利 44.2，毛利率＝44.2 ÷ 65＝0.68＝68%。',ans:'68%。練習題。'},
+ '05-4':{prompt:'大杯成本 $33.12。財務室規定毛利率至少 55%。大杯<b>最低</b>要賣多少元？（整數元）',hint:'毛利率 ≥ 55%，代表成本最多占售價的幾 %？'},
+ '05-5':{prompt:'中杯 500 ml 賣 $50。大杯 864 ml，每 ml 的價格不能比中杯貴。大杯<b>最高</b>能賣多少元？（整數元）',hint:'中杯每 ml 多少錢？大杯 864 ml 最多幾元？'}
+};
+const HSAY=[
+ ['lab','黃金比例是','{name}！新的黃金比例是<b>紅茶：鮮奶＝5：3</b>、<b>鮮奶：糖漿＝4：1</b>。三種要一起倒進量杯，我需要一個連比。'],
+ ['lab','團體訂單來了','大團體訂單來了！要做 <b>15 杯</b>，每杯 700 ml，照剛剛的連比調。'],
+ ['draft','第二根木條','第二根木條：AB 長 100 cm、AC 長 90 cm，這次 D 點離 B 點 35 cm。'],
+ ['brand','原圖寬 4 cm','這次的新 LOGO 原圖寬 6 cm、高 4 cm。印刷廠送來四張樣稿，有一張被拉歪了！右邊的縮放器可以拉拉看。'],
+ ['brand','招牌上的 LOGO','那店門口的招牌呢？招牌上的 LOGO 要<b>高 1.35 公尺</b>，注意單位喔。'],
+ ['bar','我的吸管是 24 cm','吸管插到底，露出來的部分根本咬不到！而且我買的是新款杯子，吸管是 21 cm。'],
+ ['bar','杯子高 16 cm','新款杯子高 15 cm、杯口 8 cm，吸管斜靠在杯口。右邊測量台上，藍色和黃色兩個三角形是相似的。']
+];
+Object.entries(LEVELS).forEach(([zid,lv])=>lv.steps.forEach(s=>{if(s.no&&HARD[s.no])s.hard=HARD[s.no];if(s.t==='say'){const h=HSAY.find(([z,k])=>z===zid&&s.text.includes(k));if(h)s.hard={text:h[2]};}}));
+const isHard=()=>S.diff==='hard';
+const V=st=>st&&st.hard&&isHard()?Object.assign({},st,st.hard):st;
+const HNOTE={'連比與連比例式':{sub:'20：12：3 共 35 份。15 杯 10500 ml → 每份 300 ml → 鮮奶 12 份＝3600 ml。'}};
+Object.values(LEVELS).forEach(lv=>lv.steps.forEach(s=>{if(s.t==='note'&&HNOTE[s.title])s.hard=HNOTE[s.title];}));
 let L=null;
 function startStage(id){id=id||'office';const lv=LEVELS[id],z=ZONES.find(z=>z.id===id);
   L={id,lv,t0:Date.now(),stageMs:0,i:0,wrong:0,bench:'none',k:1.2,price:60,mlShown:false,hist:[],solved:{},att:{},r:{t:3,m:3,s:3},ad:50,lw:4,lh:3,lock:false,sl:24};
@@ -986,12 +1073,12 @@ function startStage(id){id=id||'office';const lv=LEVELS[id],z=ZONES.find(z=>z.id
    <div class="arena nobench" id="arena"><div class="left" id="left"></div><div class="bench win" id="bench"></div></div>
    <div class="boxslot"><div class="dbox win" id="dbox" tabindex="0"></div></div></section>`);
   $('#ocv').getContext('2d').drawImage(lv.scene==='office'?drawOffice():drawRoom(lv.scene),0,0);
-  const hr=$('#hudr');hr.append(hudButtons());const ex=E('button','chipbtn','◀ 回店面');ex.type='button';ex.onclick=()=>{sfx('sel');commitTime();S.prog=`${z.name}（中途離開）`;save();logEv('leave',{note:`${z.name}：第 ${L.i+1}/${lv.steps.length} 步離開，停留 ${fmtMs(L.stageMs)}`});hub();};hr.append(ex);
+  const hr=$('#hudr');{const bk=E('button','chipbtn','手冊');bk.type='button';bk.title='員工手冊';bk.onclick=bookView;hr.append(bk);}hr.append(hudButtons());const ex=E('button','chipbtn','◀ 回店面');ex.type='button';ex.onclick=()=>{sfx('sel');commitTime();S.prog=`${z.name}（中途離開）`;save();logEv('leave',{note:`${z.name}：第 ${L.i+1}/${lv.steps.length} 步離開，停留 ${fmtMs(L.stageMs)}`});hub();};hr.append(ex);
   const tick=()=>{const c=$('#clk');if(c)c.textContent=fmtMs((S.playMs||0)+(L&&L.t0?Math.min(Date.now()-L.t0,15*60000):0));};tick();clkT=setInterval(tick,1000);
   updateHud();run();}
 function commitTime(){if(!L||!L.t0)return 0;const d=Math.min(Date.now()-L.t0,15*60000);S.playMs=(S.playMs||0)+d;L.stageMs+=d;L.t0=0;save();return d;}
 document.addEventListener('visibilitychange',()=>{if(!L||!$('#ocv'))return;if(document.visibilityState==='hidden')commitTime();else if(!L.t0&&!$('.clear'))L.t0=Date.now();});
-function run(){const SS=L.lv.steps,st=SS[L.i];$('#prog').style.width=(L.i/SS.length*100)+'%';
+function run(){const SS=L.lv.steps,st=V(SS[L.i]);$('#prog').style.width=(L.i/SS.length*100)+'%';
   if(!st)return finish();
   if(st.t==='wb'){setBench(st.m);L.i++;return run();}
   if(L.hist[L.hist.length-1]!==L.i)L.hist.push(L.i);
@@ -1015,7 +1102,7 @@ function dialog(st){$('#left').innerHTML='';
   d.onclick=()=>{if(d.classList.contains('hide')||d.dataset.step!==String(L.i))return;if(typing===my&&my)done();else{sfx('sel');next();}};d.dataset.step=String(L.i);const bk=$('#bk');if(bk)bk.onclick=e=>{e.stopPropagation();back();};d.focus({preventScroll:true});}
 document.addEventListener('keydown',e=>{if((e.key==='ArrowLeft'||e.key==='Backspace')&&!e.repeat){const d=$('#dbox');if(d&&!d.classList.contains('hide')&&document.activeElement===d){e.preventDefault();back();return;}}
   if((e.key===' '||e.key==='Enter')&&!e.repeat){const d=$('#dbox');if(d&&!d.classList.contains('hide')&&document.activeElement===d){e.preventDefault();d.click();}}});
-function showNote(st){overlay((o,close)=>{sfx('ok');o.innerHTML=`<div class="ovc win paper pad"><div class="ov-k">STAFF HANDBOOK</div><h2>員工手冊・新的一頁</h2><div class="formula">${st.title}<small>${st.body}</small><small>${st.sub||''}</small></div><div class="ov-row"><button class="pbtn" data-primary>收進手冊</button><button class="pbtn alt" id="nb">◀ 上一步</button></div></div>`;o.querySelector('[data-primary]').onclick=()=>close().then(next);o.querySelector('#nb').onclick=()=>close().then(back);});}
+function showNote(st){overlay((o,close)=>{sfx('ok');o.innerHTML=`<div class="ovc win paper pad"><div class="ov-k">STAFF HANDBOOK</div><h2>員工手冊・新的一頁</h2><div class="formula">${st.title}<small>${st.body}</small><small>${st.sub||''}</small></div><div class="ov-row"><button class="pbtn" data-primary>收進手冊</button><button class="pbtn alt" id="nb">◀ 上一步</button></div></div>`;o.querySelector('[data-primary]').onclick=()=>{const nw=!(S.book||[]).includes(st.title);if(nw){S.book=(S.book||[]).concat(st.title);save();}close().then(()=>{if(nw){gain(5,0);toast('收進員工手冊',`第 ${S.book.length} 頁・答題時可以隨時翻閱`,'冊');}next();});};o.querySelector('#nb').onclick=()=>close().then(back);});}
 function ticket(no,tag,xp,rev,body){return `<div class="tk win paper pad" id="tk"><div class="tk-h"><span class="tk-no">ORDER ${no}</span><span class="tk-tag">${tag}</span><span class="tk-rw">${xp?`<span>+${xp}XP</span>`:''}${rev?`<span>+$${rev}</span>`:''}</span></div>${body}<div class="stamp" id="stamp"></div></div>`;}
 function showQ(){$('#dbox').classList.add('hide');return $('#left');}
 function stampIt(txt,ok){const s=$('#stamp');s.textContent=txt;s.className='stamp'+(ok?' ok':'');void s.offsetWidth;s.classList.add('show');sfx('stamp');setTimeout(()=>{const[x,y]=centerOf(s);burst(x,y,34);},100);}
@@ -1029,9 +1116,11 @@ function question(st){const left=showQ();if(!L.solved[L.i])att();
   let body=`<p class="tk-p">${st.prompt}</p>`;
   if(st.type==='num')body+=`<div class="tk-in"><div class="lcd"><input id="qa" inputmode="decimal" autocomplete="off" placeholder="?" aria-label="答案"><span class="u">${st.unit||''}</span></div><button class="pbtn sm" id="qs">送出</button></div>`;
   else body+=`<div class="opts${st.choices.some(c=>c.length>7)?' long':''}">${st.choices.map((c,i)=>`<button class="opt" data-i="${i}"><span class="ol">${'ABCD'[i]}</span><span>${c}${st.cu||''}</span></button>`).join('')}</div>`;
-  body+=`${st.hint?'<div class="tk-tools"><button class="ptool" id="qh">翻員工手冊（提示）</button></div>':''}<div class="tk-fb" id="fb"></div><div class="tk-next" id="tkn"></div>${backBtn('qb','上一步')}${st.ans?`<div class="tk-ans">教師提示：${st.ans}</div>`:''}`;
+  body+=`<div class="tk-tools"><button class="ptool" id="qbk">查員工手冊</button>${st.hint?`<button class="ptool" id="qh">${hintLabel()}</button>`:''}</div><div class="tk-fb" id="fb"></div><div class="tk-next" id="tkn"></div>${backBtn('qb','上一步')}${st.ans?`<div class="tk-ans">教師提示：${st.ans}</div>`:''}`;
   left.innerHTML=ticket(st.no,st.tag,st.xp,st.rev,body);const fb=$('#fb');
-  if(st.hint)$('#qh').onclick=e=>{sfx('sel');att().hint=true;fb.innerHTML=`<div class="hint">${st.hint}</div>`;e.target.parentNode.remove();};
+  $('#qbk').onclick=()=>{sfx('sel');bookView();};
+  if(st.hint)$('#qh').onclick=e=>{if(isHard()){if(S.tickets>0)S.tickets--;else if(S.revenue>=TICKET){S.revenue-=TICKET;}else{sfx('bad');fb.innerHTML=`<div class="hint">營收不到 $${TICKET}，買不起提示券。先自己想想，或查員工手冊。</div>`;return;}save();updateHud();sfx('coin');}else sfx('sel');
+    att().hint=true;fb.innerHTML=`<div class="hint">${st.hint}</div>`;e.target.remove();};
   const qb=$('#qb');if(qb)qb.onclick=back;
   if(L.solved[L.i]){if(st.type==='num'){const inp=$('#qa');inp.value=st.answer;inp.disabled=true;$('#qs').disabled=true;}else document.querySelectorAll('.opt').forEach((x,i)=>{x.disabled=true;if(i===st.answer)x.classList.add('yes');});fb.innerHTML=`<div class="ok">這張訂單已經完成</div><div class="ex">${st.explain}</div>`;nextBtn();return;}
   const win=g=>{L.solved[L.i]=true;att().g.push(g);logAnswer(st);stampIt('合格',true);gain(st.xp,st.rev,$('#stamp'));fb.innerHTML=`<div class="ok">答對了！</div><div class="ex">${st.explain}</div>`;if(st.reveal){L.mlShown=true;refreshBench();}nextBtn();};
@@ -1047,25 +1136,29 @@ function question(st){const left=showQ();if(!L.solved[L.i])att();
     else{b.classList.add('no');b.disabled=true;{const a=att();a.g.push(st.choices[i]);a.dg.push((st.tags||[])[i]||'');}if(!st.free&&!st.practice)L.wrong++;wrongFx();fb.innerHTML=`<div class="bad">再想想</div><div>${st.why[i]}</div>`;}});
 }
 function priceTicket(){const left=showQ();if(!L.solved[L.i])att();
-  left.innerHTML=ticket('05-4','經濟・行銷',30,0,`<p class="tk-p">店長想賣 $60。拖動工作檯上的價格，找出兩個條件都打勾的價錢，再提出定價。</p>
-   <div class="readout">目前提案<b id="ro">$${L.price}</b></div>
-   <ul class="cond"><li id="c1"><b>條件 1・財務長</b>毛利率 ≥ 55%<span id="c1v"></span></li><li id="c2"><b>條件 2・珍珍</b>每 100 ml ≤ $10<span id="c2v"></span></li></ul><div class="tk-in"><button class="pbtn" id="ps">提出定價</button></div>
+  left.innerHTML=ticket(PRICEQ.no,'經濟・行銷',30,0,`<p class="tk-p">店長想賣 $60。請提出大杯的售價（整數元），讓<b>毛利率 ≥ 55%</b>，而且<b>每 100 ml 不比中杯的 $10 貴</b>。</p>
+   <div class="tk-in"><div class="lcd"><input id="pa" inputmode="numeric" autocomplete="off" placeholder="?" aria-label="大杯售價"><span class="u">元</span></div><button class="pbtn sm" id="ps">提出定價</button></div>
+   <ul class="cond" id="cond" hidden><li id="c1"><b>條件 1・財務長</b>毛利率 ≥ 55%<span id="c1v"></span></li><li id="c2"><b>條件 2・珍珍</b>每 100 ml ≤ $10<span id="c2v"></span></li></ul>
+   <div class="tk-tools"><button class="ptool" id="qbk">查員工手冊</button></div>
    <div class="tk-fb" id="fb"></div><div class="tk-next" id="tkn"></div>${backBtn('qb','上一步')}
-   <div class="tk-ans">教師提示：條件為毛利率 ≥ 55%、每 100 ml ≤ $10（中杯價），合理區間 $74～$86。可請學生列成不等式：(p − ${COST}) ÷ p ≥ 0.55 且 p ÷ 8.64 ≤ 10。</div>`);
-  const fb=$('#fb');const qb=$('#qb');if(qb)qb.onclick=back;condUpd(L.price);
-  if(L.solved[L.i]){$('#ps').disabled=true;fb.innerHTML=`<div class="ok">定價 $${L.price} 已通過</div>`;nextBtn();return;}
-  $('#ps').onclick=()=>{const p=L.price;
-    if(p>=74&&p<=86){L.solved[L.i]=true;att().g.push('$'+p);logAnswer(PRICEQ);$('#ps').disabled=true;const pr=$('#price');if(pr)pr.disabled=true;stampIt('通過',true);gain(30,0,$('#stamp'));
+   <div class="tk-ans">教師提示：合理區間 $74～$86（就是 05-4、05-5 算出的上下限）。可請學生說明為什麼 $73、$87 不行。</div>`);
+  const fb=$('#fb'),inp=$('#pa');const qb=$('#qb');if(qb)qb.onclick=back;$('#qbk').onclick=()=>{sfx('sel');bookView();};
+  if(L.solved[L.i]){inp.value=L.price;inp.disabled=true;$('#ps').disabled=true;condUpd(L.price);fb.innerHTML=`<div class="ok">定價 $${L.price} 已通過</div>`;nextBtn();return;}
+  const go=()=>{const raw=toHalf(inp.value).trim();
+    if(!/^\d+$/.test(raw)){fb.innerHTML='<div class="hint">請輸入整數元，例如 80。</div>';return;}
+    const p=+raw;L.price=p;L.priced=true;refreshBench();condUpd(p);
+    if(p>=74&&p<=86){L.solved[L.i]=true;att().g.push('$'+p);logAnswer(PRICEQ);$('#ps').disabled=true;inp.disabled=true;stampIt('通過',true);gain(30,0,$('#stamp'));
       fb.innerHTML=`<div class="ok">會議通過！</div><div class="ex">$${p} 讓毛利率維持在 55% 以上，每 100 ml 也比中杯便宜。財務長和珍珍都滿意。</div>`;nextBtn();return;}
     {const a=att();a.g.push('$'+p);a.dg.push(p===60?'照高度（相似比）定價':p<74?'毛利率不足':'每 100 ml 比中杯貴');}
     L.wrong++;wrongFx();stampIt('否決',false);
-    if(p===60)fb.innerHTML=`<div class="bad">這是「只看高度」的定價</div><div>大杯成本是中杯的 1.66 倍，價格卻只多 1.2 倍。回想剛剛算的：容量是 1.728 倍。</div>`;
-    else if(p<74)fb.innerHTML=`<div class="bad">財務長否決</div><div>毛利率只有 ${Math.round((p-COST)/p*100)}%，低於 55%。用員工手冊的方法：最低售價＝大杯成本 ÷ 0.45＝${COST} ÷ 0.45 ≈ ？</div>`;
-    else fb.innerHTML=`<div class="bad">珍珍搖頭</div><div>每 100 ml 要 $${(p/8.64).toFixed(1)}，比中杯的 $10 還貴，她會改買兩杯中杯。最高售價＝每 100 ml $10 × 8.64 份＝？</div>`;};
+    if(p===60)fb.innerHTML=`<div class="bad">這是「只看高度」的定價</div><div>大杯容量是中杯的 1.728 倍，成本也跟著變多，價格卻只多 1.2 倍。</div>`;
+    else if(p<74)fb.innerHTML=`<div class="bad">財務長否決</div><div>毛利率只有 ${Math.round((p-COST)/p*1000)/10}%，低於 55%。回頭想想 05-4 算出的最低售價。</div>`;
+    else fb.innerHTML=`<div class="bad">珍珍搖頭</div><div>每 100 ml 要 $${(p/8.64).toFixed(2)}，比中杯的 $10 還貴。回頭想想 05-5 算出的最高售價。</div>`;};
+  $('#ps').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go();};setTimeout(()=>inp.focus(),80);
 }
-function condUpd(p){const c1=$('#c1'),c2=$('#c2');if(!c1||!c2)return;const mg=(p-COST)/p,pu=p/8.64;
+function condUpd(p){const c1=$('#c1'),c2=$('#c2'),cd=$('#cond');if(!c1||!c2)return;if(cd)cd.hidden=false;const mg=(p-COST)/p,pu=p/8.64;
   c1.classList.toggle('ok',mg>=.55);c2.classList.toggle('ok',pu<=10);
-  $('#c1v').textContent=`(${p} − ${COST}) ÷ ${p} ≈ ${Math.round(mg*100)}%`;$('#c2v').textContent=`${p} ÷ 8.64 ≈ $${pu.toFixed(1)}`;
+  $('#c1v').textContent=`(${p} − ${COST}) ÷ ${p} ≈ ${Math.round(mg*1000)/10}%`;$('#c2v').textContent=`${p} ÷ 8.64 ≈ $${pu.toFixed(2)}`;
 }
 
 /* ================= workbench ================= */
@@ -1095,12 +1188,12 @@ function refreshBench(){const b=$('#bench');if(!b||L.bench==='none')return;
     const f=x=>'×'+(+x.toFixed(3));const u=()=>{const k=+$('#kk').value;L.k=k;$('#kv').textContent=k.toFixed(2);$('#r1').textContent=f(k);$('#r2').textContent=f(k*k);$('#r3').textContent=f(k*k*k);drawCups($('#cups'),k);setLab(k);};
     $('#kk').oninput=()=>{u();sfx('blip');};u();return;}
   if(L.bench==='price'){b.innerHTML=`<div class="wtitle"><b>定價工作檯</b><small>WORKBENCH</small></div>${cupHTML()}
-     <div class="krow"><label for="price">大杯售價</label><input type="range" id="price" min="50" max="110" step="1" value="${L.price}"><span class="kv" id="pv2"></span></div>
+     <div class="krow"><span>提案售價</span><span class="kv" id="pv2"></span></div>
      <table class="rt"><tr><td>飲料成本<small>864 ml × $0.03</small></td><td>$25.92</td></tr><tr><td>杯子＋封膜<small>$5 × 1.44（面積比）</small></td><td>$7.20</td></tr><tr class="hl"><td>大杯總成本</td><td>$${COST}</td></tr></table>
      <div class="meters"><div class="meter"><img class="px" id="f1" alt=""><div style="flex:1;min-width:0"><small>毛利率（中杯 60%）</small><span class="v" id="mg"></span><div class="mbar"><i id="mb1"></i></div><p id="s1"></p></div></div>
      <div class="meter"><img class="px" id="f2" alt=""><div style="flex:1;min-width:0"><small>每 100 ml（中杯 $10）</small><span class="v" id="pu"></span><div class="mbar"><i id="mb2"></i></div><p id="s2"></p></div></div></div>`;
     drawCups($('#cups'),1.2);setLab(1.2);
-    const u=()=>{const p=+$('#price').value;L.price=p;$('#pv2').textContent='$'+p;$('#lp').textContent='$'+p;const ro=$('#ro');if(ro)ro.textContent='$'+p;condUpd(p);
+    const u=()=>{const p=L.price;$('#pv2').textContent=L.priced?'$'+p:'尚未提案';$('#lp').textContent=L.priced?'$'+p:'$?';if(!L.priced){['#mg','#pu'].forEach(id=>$(id).textContent='—');['#s1','#s2'].forEach(id=>$(id).textContent='提出定價後，這裡會幫你驗算。');return;}
       const mg=(p-COST)/p,pu=p/8.64,fm=mg>=.55?'happy':mg>=.45?'mid':'sad',cm=pu<=10?'happy':pu<=10.8?'mid':'sad';
       const col=m=>m==='happy'?'#5ec95a':m==='mid'?'#ffd34e':'#e8504a';
       $('#mg').textContent=Math.round(mg*100)+'%';$('#pu').textContent='$'+pu.toFixed(1);
@@ -1109,7 +1202,7 @@ function refreshBench(){const b=$('#bench');if(!b||L.bench==='none')return;
       const b2=$('#mb2');b2.style.width=Math.min(100,pu/13*100)+'%';b2.style.background=col(cm);
       $('#s1').textContent=fm==='happy'?`阿算：每杯賺 $${(p-COST).toFixed(1)}，撐得住。`:fm==='mid'?'阿算：有賺，但比中杯差。':'阿算：賣越多，虧越多……';
       $('#s2').textContent=cm==='happy'?'珍珍：大杯比較划算，買！':cm==='mid'?'珍珍：跟中杯差不多耶。':'珍珍：還不如買兩杯中杯。';};
-    $('#price').oninput=()=>{u();sfx('blip');};u();}
+    u();}
 }
 
 /* ================= finish ================= */
@@ -1157,7 +1250,7 @@ function showBoard(){flush();overlay((o,close)=>{let tab=S.student?'cls':'all',d
     else if(!data.ok)body=`<p class="err">${esc(data.msg)}</p>`;
     else{const rows=tab==='cls'&&S.student?data.rows.filter(r=>r.cls===S.student.cls):data.rows;
       body=`<div class="lbtabs">${S.student?`<button type="button" class="chipbtn" data-t="cls" aria-pressed="${tab==='cls'}">${esc(S.student.cls)} 班</button>`:''}<button type="button" class="chipbtn" data-t="all" aria-pressed="${tab==='all'}">全部</button></div>
-       <div class="lblist">${rows.length?rows.slice(0,100).map((r,i)=>`<div class="lbr${r.me?' me':''}"><div class="rk${i<3?' m'+(i+1):''}">${i+1}</div><div class="who"><b>${esc(r.shop||'（未取店名）')}</b><span>${esc(r.cls)} 班・${esc(r.name)}${r.me?'（你）':''}</span></div><div class="sc">${r.score} 分<small>★${r.stars}・一次答對 ${r.first}・${r.min} 分鐘</small></div></div>`).join(''):'<div class="tempty">還沒有人上榜，快去完成第一個任務！</div>'}</div>
+       <div class="lblist">${rows.length?rows.slice(0,100).map((r,i)=>`<div class="lbr${r.me?' me':''}"><div class="rk${i<3?' m'+(i+1):''}">${i+1}</div><div class="who"><b>${esc(r.shop||'（未取店名）')}</b><span>${esc(r.cls)} 班・${esc(r.name)}${r.me?'（你）':''}${r.diff==='挑戰'?'<em class="dbadge hard">挑戰</em>':''}</span></div><div class="sc">${r.score} 分<small>★${r.stars}・一次答對 ${r.first}・${r.min} 分鐘</small></div></div>`).join(''):'<div class="tempty">還沒有人上榜，快去完成第一個任務！</div>'}</div>
        ${data.me&&tab==='all'&&data.me.rank>100?`<p>你目前是第 ${data.me.rank} 名。</p>`:''}<p style="font-size:13px">分數＝星星 × 100＋一次就答對的題數 × 20；同分時營業時間短的排前面。姓名只顯示頭尾字。</p>`;}
     o.innerHTML=`<div class="ovc win pad wide"><div class="ov-k">RANKING</div><h2>店長排行榜</h2>${S.student?mine:''}${body}<div class="ov-row"><button class="pbtn" data-primary>關閉</button>${logUrl()?'<button class="pbtn alt" id="lbr">重新整理</button>':''}</div></div>`;
     o.querySelectorAll('.lbtabs .chipbtn').forEach(b=>b.onclick=()=>{tab=b.dataset.t;sfx('sel');draw();});
@@ -1191,7 +1284,7 @@ const QNO=QLIST.map(x=>x[0]),QNAME=Object.fromEntries(QLIST);
 function tModel(){const d=T.data,SH=d.sumHead,LH=d.logHead,si=n=>SH.indexOf(n),li=n=>LH.indexOf(n);
   const students=d.sum.filter(r=>String(r[0]).trim()!=='').map(r=>({cls:String(r[si('班級')]),seat:String(r[si('座號')]).padStart(2,'0'),name:String(r[si('姓名')]),shop:String(r[si('店名')]||''),
     last:r[si('最後上線')]?new Date(r[si('最後上線')]):null,cur:String(r[si('目前進度')]||''),lv:+r[si('等級')]||1,rev:+r[si('營收')]||0,stars:parseInt(String(r[si('財務室')]||'0'))||0,price:r[si('大杯定價')],
-    zs:ZONES.map(z=>String(r[si(z.name)]||'')),tot:+r[si('總星數')]||0,score:+r[si('分數')]||0,mins:+r[si('遊戲時間(分)')]||0,firstN:+r[si('一次答對題數')]||0,n:+r[si('累計作答')]||0,chk:String(r[si('名單核對')]||''),fr:String(r[si('第一次答對率')]||'')}))
+    zs:ZONES.map(z=>String(r[si(z.name)]||'')),tot:+r[si('總星數')]||0,score:+r[si('分數')]||0,mins:+r[si('遊戲時間(分)')]||0,firstN:+r[si('一次答對題數')]||0,n:+r[si('累計作答')]||0,chk:String(r[si('名單核對')]||''),diff:si('難度')>=0?String(r[si('難度')]||''):'',fr:String(r[si('第一次答對率')]||'')}))
     .sort((a,b)=>a.cls.localeCompare(b.cls,'zh-Hant',{numeric:true})||(+a.seat)-(+b.seat));
   const g=(r,n)=>r[li(n)];
   const logs=d.log.map(r=>({t:g(r,'收到時間')?new Date(g(r,'收到時間')):null,cls:String(g(r,'班級')),seat:String(g(r,'座號')).padStart(2,'0'),name:String(g(r,'姓名')),ev:g(r,'事件'),qno:String(g(r,'題號')||''),
@@ -1223,7 +1316,7 @@ function renderT(m){const f=tFilter(m),out=$('#tout'),ans=f.logs.filter(l=>l.ev=
   if(T.tab==='roster'){out.innerHTML=rosterHTML(m);bindRoster(out);return;}
   if(T.tab!=='bank'&&!f.students.length&&!f.logs.length){out.innerHTML='<div class="tempty">還沒有學生的紀錄。<br>學生從 GitHub Pages 網址進入遊戲、登記上班後，資料就會出現在這裡。</div>';return;}
   if(T.tab==='students'){
-    out.innerHTML=`<div class="tscroll"><table class="ttab"><thead><tr><th>班級 座號</th><th>姓名</th><th>店名</th><th>目前進度</th><th>Lv</th><th>研發 設計 品牌 吧台 財務</th><th>總星</th><th>分數</th><th>遊戲時間</th><th>第一次答對率</th><th>大杯定價</th><th>最後上線</th></tr></thead><tbody>${f.students.map((s,i)=>`<tr data-i="${i}" tabindex="0"><td class="n8">${esc(s.cls)}-${esc(s.seat)}</td><td>${s.last&&now-s.last<5*60000?'<span class="live" title="正在玩"></span>':''}${esc(s.name)}${s.chk==='名單外'?'<span class="badx">名單外</span>':''}</td><td>${esc(s.shop)}</td><td>${esc(s.cur)}${s.stars?`<span class="sub">${'★'.repeat(s.stars)}</span>`:''}</td><td class="n8">${s.lv}</td><td>${s.zs.map(c=>`<span class="qc ${c?'ok':''}">${c?esc(c):'—'}</span>`).join('')}</td><td class="n8">${s.tot}</td><td class="n8">${s.score||'—'}</td><td>${s.mins?s.mins+' 分':'—'}</td><td class="n8">${esc(s.fr||'—')}</td><td class="n8">${s.price?'$'+esc(s.price):'—'}</td><td>${rel(s.last)}</td></tr>`).join('')}</tbody></table></div><p class="tempty" style="padding:12px 0 0;text-align:left;font-size:14px">五區依序是：研發部（1-1）、杯身設計室（1-2）、品牌部（1-3）、吧台（1-4）、財務室（終章）。點學生那一列可以看他完整的遊戲過程（進出關卡、每題作答、用時）。</p>`;
+    out.innerHTML=`<div class="tscroll"><table class="ttab"><thead><tr><th>班級 座號</th><th>姓名</th><th>店名</th><th>目前進度</th><th>Lv</th><th>研發 設計 品牌 吧台 財務</th><th>總星</th><th>分數</th><th>遊戲時間</th><th>第一次答對率</th><th>大杯定價</th><th>最後上線</th></tr></thead><tbody>${f.students.map((s,i)=>`<tr data-i="${i}" tabindex="0"><td class="n8">${esc(s.cls)}-${esc(s.seat)}</td><td>${s.last&&now-s.last<5*60000?'<span class="live" title="正在玩"></span>':''}${esc(s.name)}${s.chk==='名單外'?'<span class="badx">名單外</span>':''}${s.diff==='挑戰'?'<span class="badh">挑戰</span>':''}</td><td>${esc(s.shop)}</td><td>${esc(s.cur)}${s.stars?`<span class="sub">${'★'.repeat(s.stars)}</span>`:''}</td><td class="n8">${s.lv}</td><td>${s.zs.map(c=>`<span class="qc ${c?'ok':''}">${c?esc(c):'—'}</span>`).join('')}</td><td class="n8">${s.tot}</td><td class="n8">${s.score||'—'}</td><td>${s.mins?s.mins+' 分':'—'}</td><td class="n8">${esc(s.fr||'—')}</td><td class="n8">${s.price?'$'+esc(s.price):'—'}</td><td>${rel(s.last)}</td></tr>`).join('')}</tbody></table></div><p class="tempty" style="padding:12px 0 0;text-align:left;font-size:14px">五區依序是：研發部（1-1）、杯身設計室（1-2）、品牌部（1-3）、吧台（1-4）、財務室（終章）。點學生那一列可以看他完整的遊戲過程（進出關卡、每題作答、用時）。</p>`;
     out.querySelectorAll('tbody tr').forEach(tr=>{const go=()=>studentDetail(f.students[+tr.dataset.i],m);tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter')go();};});return;}
   if(T.tab==='diag'){
     out.innerHTML=`<div class="dg">${QNO.filter(no=>ans.some(x=>x.qno===no)).length?'':'<div class="tempty">還沒有作答紀錄。</div>'}${QNO.filter(no=>ans.some(x=>x.qno===no)).map(no=>{const a=ans.filter(x=>x.qno===no),n=a.length,first=a.filter(x=>x.first).length,dg={};
@@ -1233,7 +1326,7 @@ function renderT(m){const f=tFilter(m),out=$('#tout'),ans=f.logs.filter(l=>l.ev=
         <div class="hbar ok"><span>第一次就答對</span><span class="tr"><i style="width:${n?first/n*100:0}%"></i></span><span class="p8">${first}</span></div>
         ${rows.length?rows.map(([d,names])=>`<div class="hbar"><span>${esc(d)}</span><span class="tr"><i style="width:${n?names.length/n*100:0}%"></i></span><span class="p8">${names.length}</span><span class="who">${[...new Set(names)].slice(0,12).map(esc).join('、')}${new Set(names).size>12?' 等':''}</span></div>`).join(''):'<div class="meta">目前沒有常見迷思紀錄。</div>'}</div>`;}).join('')}</div>`;return;}
   if(T.tab==='price'){
-    const firstP=ans.filter(a=>a.qno==='05-4').map(a=>parseInt(a.given.split(' | ')[0].replace('$',''))).filter(x=>!isNaN(x));
+    const firstP=ans.filter(a=>a.qno===PRICEQ.no).map(a=>parseInt(a.given.split(' | ')[0].replace('$',''))).filter(x=>!isNaN(x));
     const finalP=f.students.map(s=>+s.price).filter(Boolean);
     const bins=[];for(let x=50;x<=110;x+=5)bins.push(x);
     const hist=(arr,lab)=>{const c=bins.map(b=>arr.filter(v=>v>=b&&v<b+5).length),mx=Math.max(1,...c);
@@ -1266,17 +1359,56 @@ function bindRoster(root){const b=root.querySelector('#rosterUp');if(!b)return;b
     if(!r.ok){msg.textContent='上傳失敗：'+r.error;b.disabled=false;return;}
     const d=await fetchTeacher(T.key);if(d.ok)T.data=d;sfx('ok');toast('名單已更新',`共 ${r.n} 人`,'名');showTeacher();}
   catch(e){msg.textContent='連不上紀錄服務。';b.disabled=false;}};}
-function bindBank(root,ret,closeFn){root.querySelectorAll('.jump').forEach(b=>b.onclick=()=>{const go=()=>previewStage(b.dataset.z,+b.dataset.i,ret);closeFn?closeFn().then(go):go();});}
-function previewStage(id,i,ret){unlockAudio();sfx('enter');if(!PV)PV={S,ret};const m=S.muted;S=fresh();S.name='老師';S.shop='教師試玩';S.muted=m;
+
+/* ================= 員工手冊與店長商店 ================= */
+const TICKET=300;
+function hintLabel(){if(!isHard())return '看提示';return S.tickets>0?`看提示（用 1 張提示券，剩 ${S.tickets} 張）`:`看提示（花 $${TICKET} 買提示券）`;}
+function allNotes(){const out=[];ZONES.forEach(z=>LEVELS[z.id].steps.forEach(st=>{if(st.t==='note'&&!out.some(n=>n.st.title===st.title))out.push({z,st});}));return out;}
+function bookView(){const ns=allNotes(),own=new Set(S.book||[]),all=tmOn()||!!PV;sfx('sel');
+  overlay((o,close)=>{o.innerHTML=`<div class="ovc win paper pad wide"><div class="ov-k">STAFF HANDBOOK</div><h2>員工手冊</h2>
+   <p class="bk-sub">已收錄 ${ns.filter(n=>own.has(n.st.title)).length}／${ns.length} 頁。答題時可以隨時翻閱，不扣分。</p>
+   <div class="bk">${ns.map(({z,st})=>{const v=V(st);return own.has(st.title)||all?`<div class="formula bkp"><span class="bk-z">0${z.no} ${z.name}</span>${v.title}<small>${v.body}</small>${v.sub?`<small>${v.sub}</small>`:''}</div>`:`<div class="formula bkp lock"><span class="bk-z">0${z.no} ${z.name}</span>？？？<small>完成「${z.name}」的劇情後收錄</small></div>`;}).join('')}</div>
+   <div class="ov-row"><button class="pbtn" data-primary>闔上手冊</button></div></div>`;o.querySelector('[data-primary]').onclick=()=>close();});}
+const SHOPITEMS=[
+ {id:'plant',name:'綠植盆栽',price:600,desc:'店裡多兩盆綠植，看起來更舒服。',fx:'店面裝潢'},
+ {id:'uniform',name:'粉紅新制服',price:900,desc:'店員換上粉紅色制服。',fx:'店面裝潢'},
+ {id:'cat',name:'招財貓',price:1200,desc:'門口的招財貓會一直招手。',fx:'客人來得更勤'},
+ {id:'neon',name:'霓虹招牌',price:1500,desc:'牆上亮起霓虹燈招牌。',fx:'每位客人多賺 $10'},
+ {id:'juke',name:'復古點唱機',price:2000,desc:'角落放一台會發光的點唱機。',fx:'每位客人多賺 $10'}];
+const hasDeco=id=>(S.deco||[]).includes(id);
+const custIncome=()=>50+(hasDeco('neon')?10:0)+(hasDeco('juke')?10:0);
+function shopView(){sfx('sel');overlay((o,close)=>{const draw=()=>{o.innerHTML=`<div class="ovc win pad wide"><div class="ov-k">SHOP</div><h2>店長採購單</h2>
+   <p>用營收裝潢店面、提升生意，或買挑戰班用的提示券。目前營收 <b class="yel">$${S.revenue.toLocaleString()}</b>。</p>
+   <div class="shopl">${SHOPITEMS.map(it=>{const own=hasDeco(it.id);return `<div class="shi${own?' own':''}"><div><b>${it.name}</b><small>${it.desc}</small><span class="tag">${it.fx}</span></div><button type="button" class="pbtn sm${own?' alt':''}" data-buy="${it.id}"${own?' disabled':''}>${own?'已擁有':'$'+it.price.toLocaleString()}</button></div>`;}).join('')}
+    <div class="shi"><div><b>提示券</b><small>挑戰班看提示時使用，一張用一次。目前有 ${S.tickets||0} 張。</small><span class="tag">${isHard()?'挑戰班適用':'基礎班看提示免費，不需要買'}</span></div><button type="button" class="pbtn sm" data-buy="ticket">$${TICKET}</button></div></div>
+   <p class="err" id="shE" aria-live="polite"></p><div class="ov-row"><button class="pbtn alt" data-primary>關閉</button></div></div>`;
+  o.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{const id=b.dataset.buy,it=SHOPITEMS.find(x=>x.id===id),price=it?it.price:TICKET;
+    if(S.revenue<price){sfx('bad');o.querySelector('#shE').textContent=`營收不夠，還差 $${(price-S.revenue).toLocaleString()}。完成任務或等客人上門就會增加。`;return;}
+    S.revenue-=price;if(it)S.deco=(S.deco||[]).concat(id);else S.tickets=(S.tickets||0)+1;save();logEv('buy',{note:`購買 ${it?it.name:'提示券'}（$${price}）`});sfx('coin');updateHud();draw();
+    toast(it?`${it.name} 到貨！`:'買了一張提示券',it?it.fx:`共 ${S.tickets} 張`,'$');});
+  o.querySelector('[data-primary]').onclick=()=>close().then(()=>{if($('#scv'))hub();});};draw();});}
+function drawDeco(g,t){
+  const plant=(x,y)=>{R(g,x+2,y+8,8,6,'#a96a35');R(g,x,y,12,9,'#4f9a4c');R(g,x+2,y-2,8,3,'#6fc066');};
+  if(hasDeco('plant')){plant(64,128);plant(196,40);}
+  if(hasDeco('neon')){const on=(t>>4)%7!==0,c=on?'#ff8fab':'#8a4a5a';R(g,199,4,36,22,'#2a1c25');R(g,199,4,36,1,c);R(g,199,25,36,1,c);R(g,199,4,1,22,c);R(g,234,4,1,22,c);
+    R(g,210,9,12,10,on?'#ffd34e':'#7a6a30');R(g,211,10,10,2,'#2a1c25');R(g,213,13,2,2,'#2a1c25');R(g,217,14,2,2,'#2a1c25');R(g,215,6,1,4,c);if(on){g.fillStyle='rgba(255,143,171,.18)';g.fillRect(196,2,42,27);}}
+  if(hasDeco('juke')){R(g,204,104,16,22,'#7a3f62');R(g,205,105,14,8,'#ffd34e');R(g,206,106,12,6,['#ff8fab','#9fc4ff','#b8f28c'][(t>>3)%3]);R(g,206,115,12,8,'#2a1c25');for(let i=0;i<3;i++)R(g,208+i*4,117,2,4,'#e09a55');R(g,204,126,16,2,'#4a2840');}
+  if(hasDeco('cat')){const x=48,y=134,up=(t>>3)%2;R(g,x,y,10,9,'#fff6e2');R(g,x,y-2,2,2,'#fff6e2');R(g,x+8,y-2,2,2,'#fff6e2');R(g,x+2,y+2,1,1,EYE);R(g,x+7,y+2,1,1,EYE);R(g,x+2,y+5,6,1,'#e8504a');R(g,x+4,y+6,2,2,'#ffd34e');R(g,x+10,y+(up?-2:1),3,3,'#fff6e2');}
+}
+function bindBank(root,ret,closeFn){root.querySelectorAll('[data-pvd]').forEach(b=>b.onclick=()=>{PVD=b.dataset.pvd;sfx('sel');root.querySelectorAll('[data-pvd]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});root.querySelectorAll('.jump').forEach(b=>b.onclick=()=>{const go=()=>previewStage(b.dataset.z,+b.dataset.i,ret);closeFn?closeFn().then(go):go();});}
+function previewStage(id,i,ret){unlockAudio();sfx('enter');if(!PV)PV={S,ret};const m=S.muted;S=fresh();S.name='老師';S.shop='教師試玩';S.muted=m;S.diff=PVD;S.book=allNotes().map(n=>n.st.title);
   startStage(id);const hr=$('#hudr');const tag=E('span','stat pvtag','教師試玩・不記錄');hr.prepend(tag);
   const ex=[...hr.querySelectorAll('button')].find(x=>x.textContent.includes('回店面'));if(ex)ex.textContent='◀ 回題庫';
   if(i>0){clearInterval(typing);typing=null;L.i=i;L.hist=[];L.mlShown=L.lv.steps.slice(0,i).some(x=>x.reveal);const bm=benchAt(i);L.bench=bm;$('#arena').classList.toggle('nobench',bm==='none');refreshBench();$('#dbox').classList.remove('hide');run();}}
 function exitPreview(){const p=PV;PV=null;L=null;S=p.S;applyTM();(p.ret||titleScreen)();}
-function bankHTML(){return ZONES.map(z=>{const lv=LEVELS[z.id];let n=0;
+function hardHTML(st){if(!st.hard||!st.hard.prompt&&!st.hard.choices&&st.hard.answer==null)return '';const h=Object.assign({},st,st.hard),ch=h.type==='choice';
+  return `<div class="hv"><b>挑戰班版本</b>${h.prompt!==st.prompt?`<div class="p">${h.prompt}</div>`:''}${ch?`<ol type="A">${h.choices.map((c,i)=>`<li class="${i===h.answer?'ok':''}">${c}${h.cu||''}${i===h.answer?'　✓':''}</li>`).join('')}</ol>`:`<div class="a">正解：${h.answer}${h.unit?' '+h.unit:''}</div>`}${h.explain!==st.explain?`<div class="x">解說：${h.explain}</div>`:''}</div>`;}
+let PVD='easy';
+function bankHTML(){return `<div class="pvd"><span>試玩時使用的難度：</span><button type="button" class="chipbtn" data-pvd="easy" aria-pressed="${PVD==='easy'}">基礎班</button><button type="button" class="chipbtn" data-pvd="hard" aria-pressed="${PVD==='hard'}">挑戰班</button></div>`+ZONES.map(z=>{const lv=LEVELS[z.id];let n=0;
   const jb=i=>`<button type="button" class="pbtn alt sm jump" data-z="${z.id}" data-i="${i}">▶ 跳到這題試玩</button>`;
   const qs=lv.steps.map((st,si)=>{
     if(st.t==='note')return `<div class="qb note"><span class="t">員工手冊：${st.title}</span>　${st.body}${st.sub?'<br>'+st.sub:''}</div>`;
-    if(st.t==='price')return `<div class="qb"><div class="h"><b>ORDER ${PRICEQ.no}</b><span>經濟・行銷</span><span>拖動價格滑桿</span></div><div class="p">店長想賣 $60。找出財務長和珍珍都點頭的大杯價錢。</div>
+    if(st.t==='price')return `<div class="qb"><div class="h"><b>ORDER ${PRICEQ.no}</b><span>經濟・行銷</span><span>輸入售價</span></div><div class="p">店長想賣 $60。請提出大杯售價（整數元），讓毛利率 ≥ 55%，而且每 100 ml 不比中杯貴。</div>
       <div class="a">正解：$74～$86（毛利率 ≥ 55% 且每 100 ml ≤ $10）</div><div class="x">大杯總成本 $${COST}＝864 ml × $0.03＋杯子封膜 $5 × 1.44</div><div class="x">常見錯誤：照高度定價 $60；低於 $74 毛利率不足；高於 $86 每 100 ml 比中杯貴。</div>
       <div class="t">教學提示：可請學生列不等式 (p − ${COST}) ÷ p ≥ 0.55、p ÷ 8.64 ≤ 10。</div>${jb(si)}</div>`;
     if(st.t!=='q')return '';n++;
@@ -1288,7 +1420,7 @@ function bankHTML(){return ZONES.map(z=>{const lv=LEVELS[z.id];let n=0;
       <div class="x">解說：${st.explain}</div>
       ${st.hint?`<div class="x">提示：${st.hint}</div>`:''}
       ${mis.length?`<div class="x">系統會診斷的迷思：${mis.join('；')}</div>`:''}
-      ${st.ans?`<div class="t">教學提示：${st.ans}</div>`:''}${jb(si)}</div>`;}).join('');
+      ${st.ans?`<div class="t">教學提示：${st.ans}</div>`:''}${hardHTML(st)}${jb(si)}</div>`;}).join('');
   return `<div class="qb-zone"><div class="qbz-h"><h3>0${z.no} ${z.name}・${lv.title}</h3><button type="button" class="pbtn sm jump" data-z="${z.id}" data-i="0">▶ 從頭試玩這一關</button></div><div class="x" style="color:var(--fg2);margin-bottom:8px">${z.unit}・${z.subj.join('、')}</div>${qs}</div>`;}).join('');}
 function studentDetail(s,m){const mine=m.logs.filter(l=>l.cls===s.cls&&l.seat===s.seat).slice().sort((a,b)=>(a.t||0)-(b.t||0));sfx('sel');
   const ans=mine.filter(l=>l.ev==='作答');

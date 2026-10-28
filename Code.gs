@@ -20,9 +20,9 @@ const LOG = '作答紀錄';
 const ROS = '學生名單';
 const ROS_HEAD = ['班級','座號','姓名'];
 const ZONE_COLS = [['lab','研發部'],['draft','杯身設計室'],['brand','品牌部'],['bar','吧台'],['office','財務室']];
-const SUM_HEAD = ['班級','座號','姓名','店名','最後上線','目前進度','等級','經驗值','營收'].concat(ZONE_COLS.map(z => z[1]), ['總星數','大杯定價','隱藏卡','累計作答','第一次答對率','一次答對題數','遊戲時間(分)','分數','名單核對']);
+const SUM_HEAD = ['班級','座號','姓名','店名','最後上線','目前進度','等級','經驗值','營收'].concat(ZONE_COLS.map(z => z[1]), ['總星數','大杯定價','隱藏卡','累計作答','第一次答對率','一次答對題數','遊戲時間(分)','分數','名單核對','難度']);
 const LOG_HEAD = ['收到時間','事件ID','班級','座號','姓名','店名','事件','題號','題目','學生作答（依序）','正確答案','第一次就答對','最後答對','作答次數','看提示','作答秒數','迷思診斷','備註'];
-const EV = {login:'登入', shop:'改店名', start:'進入關卡', answer:'作答', clear:'過關', leave:'中途離開', reset:'重設進度'};
+const EV = {login:'登入', shop:'改店名', start:'進入關卡', answer:'作答', clear:'過關', leave:'中途離開', reset:'重設進度', buy:'購買'};
 const MAX_LOG_RETURN = 12000;
 
 function setup() {
@@ -179,6 +179,7 @@ function upsert_(s, now) {
   ]);
   const ck = check_(roster_(), cls, seat, s.st.name);
   row.push(ck === '' ? '' : ck === 'ok' ? '✔' : '名單外');
+  row.push(s.diff === '挑戰' ? '挑戰' : '基礎');
   const last = sh.getLastRow();
   if (last > 1) {
     const keys = sh.getRange(2, 1, last - 1, 2).getDisplayValues();
@@ -212,14 +213,14 @@ function board_(d) {
       k: String(r[0]).trim() + '-' + String(+r[1]),
       cls: String(r[0]).trim(), name: mask_(r[2]), shop: String(r[ix('店名')] || ''),
       stars: +r[ix('總星數')] || 0, first: +r[ix('一次答對題數')] || 0,
-      score: +r[ix('分數')] || 0, min: +r[ix('遊戲時間(分)')] || 0
+      score: +r[ix('分數')] || 0, min: +r[ix('遊戲時間(分)')] || 0, diff: String(r[ix('難度')] || '')
     })).filter(r => r.score > 0).sort((a, b) => b.score - a.score || a.min - b.min);
     const txt = JSON.stringify(rows);
     if (txt.length < 95000) cache.put('board', txt, 20);
   }
   const me = String(d.cls || '').trim() + '-' + String(+d.seat);
   const meIdx = rows.findIndex(r => r.k === me);
-  const out = rows.slice(0, 300).map((r, i) => ({cls: r.cls, name: r.name, shop: r.shop, stars: r.stars, first: r.first, score: r.score, min: r.min, me: i === meIdx}));
+  const out = rows.slice(0, 300).map((r, i) => ({cls: r.cls, name: r.name, shop: r.shop, stars: r.stars, first: r.first, score: r.score, min: r.min, diff: r.diff, me: i === meIdx}));
   return json_({ok: true, rows: out, me: meIdx >= 0 ? {rank: meIdx + 1} : null});
 }
 
