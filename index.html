@@ -264,6 +264,13 @@ body.teacher .tk-ans{display:block}
 
 /* sign-in + teacher dashboard */
 .signrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.idcard{display:flex;gap:14px;align-items:baseline;justify-content:center;flex-wrap:wrap;background:#16204a;box-shadow:inset 0 0 0 3px var(--yel);padding:14px 18px;font-size:22px;width:100%}
+.idcard b{font-weight:400;font-size:34px;color:var(--yel)}
+.badx{display:inline-block;background:#8a2f2a;color:#fff;font-size:12px;padding:0 6px;margin-left:4px;vertical-align:2px}
+.rcls{margin-bottom:14px}.rcls h3{font-size:19px;color:var(--yel)}.rcls .meta{font-size:14px;color:var(--fg2);margin:2px 0 6px}
+.npl{display:flex;flex-wrap:wrap;gap:6px}.npl span{font-size:14px;background:#16204a;padding:2px 8px;box-shadow:inset 0 0 0 2px #2e3a72}
+.rup textarea{width:100%;min-height:160px;font-family:var(--f);font-size:15px;background:var(--edge);color:var(--fg);border:0;box-shadow:inset 0 0 0 3px #4c5ca8;padding:10px}
+.rup summary{cursor:pointer;color:var(--yel);font-size:17px;margin:8px 0}
 .err{color:var(--red);min-height:1.5em;font-size:15px}
 .tpage{max-width:1360px;margin:0 auto;padding:18px var(--gr) 56px var(--gl);display:flex;flex-direction:column;gap:18px}
 .thead h1{font-size:28px;line-height:1.3}
@@ -785,31 +792,49 @@ function titleScreen(){
     <p>・店裡有五個區域，每一區是一個單元任務。<br>・客人會自己進店買飲料，營收會一直累積。<br>・點對話框讓劇情往下走，遇到「訂單」就要解題。<br>・答對會蓋章、得到 EXP 和營收；答錯會看到錯誤診斷。<br>・右邊的工作檯可以拖、可以拉，先玩出直覺再算。<br>・老師從標題畫面的「教師入口」登入後，可以開啟教師模式示範。</p>
     <div class="ov-row"><button class="pbtn" data-primary>知道了</button></div></div>`;o.querySelector('[data-primary]').onclick=()=>close();});};
 }
-function askName(edit){overlay((o,close)=>{
-  const st=S.student||{};
+async function verifyLogin(stu){if(!logUrl())return{ok:true};
+  try{const r=await fetch(logUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'verify',cls:stu.cls,seat:stu.seat,name:stu.name})});const d=await r.json();return d;}
+  catch(e){return{ok:true,net:false};}}
+function askName(edit,pre){overlay((o,close)=>{let fails=0;
+  const render=pv=>{const st=pv||S.student||{};
   o.innerHTML=`<div class="ovc win pad"><div class="ov-k">${edit?'EDIT':'NEW STAFF'}</div><h2>${edit?'修改店名':'登記上班，開一間你的店！'}</h2>
-   <p>${edit?`${esc(st.cls||'')} 班 ${esc(st.seat||'')} 號 ${esc(S.name)}。改好按「確定」，招牌會跟著換。`:'填好班級、座號和姓名，你的經營紀錄會交給老師。再幫你的店取個名字。'}</p>
-   ${edit?'':`<div class="signrow"><label class="fld" for="sgC">班級<input type="text" id="sgC" maxlength="6" inputmode="numeric" placeholder="例如 901" autocomplete="off" value="${esc(st.cls||'')}"></label><label class="fld" for="sgS">座號<input type="text" id="sgS" maxlength="3" inputmode="numeric" placeholder="例如 5" autocomplete="off" value="${esc(st.seat?+st.seat:'')}"></label></div>
-   <label class="fld" for="nm">姓名<input type="text" id="nm" maxlength="12" placeholder="例如 王小明" autocomplete="off" value="${esc(st.name||'')}"></label>`}
-   <label class="fld" for="sh">店名（最多 8 個字）<input type="text" id="sh" maxlength="8" placeholder="${SHOP_IDEAS[0]}" autocomplete="off" value="${esc(S.shop)}"></label>
+   <p>${edit?`${esc(st.cls||'')} 班 ${esc(st.seat||'')} 號 ${esc(S.name)}。改好按「確定」，招牌會跟著換。`:'請照學校名冊填寫班級、座號和姓名，系統會核對名單，你的經營紀錄會交給老師。'}</p>
+   ${edit?'':`<div class="signrow"><label class="fld" for="sgC">班級<input type="text" id="sgC" maxlength="4" inputmode="numeric" placeholder="例如 901" autocomplete="off" value="${esc(st.cls||'')}"></label><label class="fld" for="sgS">座號<input type="text" id="sgS" maxlength="3" inputmode="numeric" placeholder="例如 5" autocomplete="off" value="${esc(st.seat?+st.seat:'')}"></label></div>
+   <label class="fld" for="nm">姓名（中文全名）<input type="text" id="nm" maxlength="12" placeholder="例如 王小明" autocomplete="off" value="${esc(st.name||'')}"></label>`}
+   <label class="fld" for="sh">店名（最多 8 個字）<input type="text" id="sh" maxlength="8" placeholder="${SHOP_IDEAS[0]}" autocomplete="off" value="${esc(pv&&pv.shop!=null?pv.shop:S.shop)}"></label>
    <div class="tags">${SHOP_IDEAS.map(n=>`<button type="button" class="chipbtn idea">${n}</button>`).join('')}</div>
    <p class="err" id="sgE" aria-live="polite"></p>
    <div class="ov-row"><button class="pbtn" data-primary>${edit?'確定':'簽名上班'}</button><button class="pbtn alt" id="cx">取消</button></div></div>`;
-  const er=o.querySelector('#sgE'),q=id=>o.querySelector(id);
-  const go=()=>{const shop=(q('#sh').value||'').trim();
+  const er=o.querySelector('#sgE'),q=id=>o.querySelector(id),btn=q('[data-primary]');
+  const go=async()=>{const shop=(q('#sh').value||'').trim();
     if(edit){S.shop=shop;save();logEv('shop',{note:'店名：'+sname()});sfx('ok');close().then(()=>{hub();toast(`「${sname()}」換上新招牌！`,'','店');});return;}
-    const cls=toHalf(q('#sgC').value).replace(/\s/g,''),seat=toHalf(q('#sgS').value).replace(/\D/g,''),name=q('#nm').value.trim();
-    if(!cls){er.textContent='請填班級。';q('#sgC').focus();return;}
-    if(!seat){er.textContent='請填座號，只要數字。';q('#sgS').focus();return;}
-    if(!name){er.textContent='請填姓名。';q('#nm').focus();return;}
-    const stu={cls,seat:String(+seat).padStart(2,'0'),name:name.slice(0,12)},sid=sidOf(stu),prev=loadKey(SKEY(sid)),mute=S.muted,teach=S.teacher;
-    S=prev||fresh();S.student=stu;S.name=stu.name;if(shop||!prev)S.shop=shop;if(!prev){S.muted=mute;S.teacher=teach;}save();
-    try{localStorage.setItem(CUR,sid);}catch(e){}
-    logEv('login',{note:prev?'回到遊戲':'第一次登入'});sfx('ok');
-    close().then(()=>{hub();toast(`「${sname()}」開張了！`,prev?'歡迎回來，進度已讀取':'店門口的招牌已經掛上','店');});};
+    const cls=toHalf(q('#sgC').value).replace(/\s/g,''),seat=toHalf(q('#sgS').value).replace(/\D/g,''),name=q('#nm').value.replace(/\s/g,'');
+    if(!/^\d{3,4}$/.test(cls)){er.textContent='班級請填數字，例如 901。';q('#sgC').focus();return;}
+    if(!seat||+seat<1||+seat>60){er.textContent='座號請填數字，例如 5。';q('#sgS').focus();return;}
+    if(!/^[一-鿿·]{2,6}$/.test(name)){er.textContent='姓名請填中文全名，不要有空格、英文或符號。';q('#nm').focus();return;}
+    const stu={cls,seat:String(+seat).padStart(2,'0'),name};
+    btn.disabled=true;btn.textContent='核對名單中…';er.textContent='';
+    const v=await verifyLogin(stu);btn.disabled=false;btn.textContent='簽名上班';
+    if(v&&v.ok===false&&v.why){fails++;sfx('bad');
+      er.textContent=({cls:`找不到「${cls}」班，請確認班級。`,seat:`${cls} 班沒有 ${+seat} 號，請確認座號。`,name:`${cls} 班 ${+seat} 號的姓名對不上，請檢查有沒有打錯字。`})[v.why]+(fails>=3?'還是不行的話，請舉手請老師協助。':'');return;}
+    confirmID(stu,shop,v&&v.net===false);};
   o.querySelectorAll('.idea').forEach(b=>b.onclick=()=>{q('#sh').value=b.textContent;sfx('blip');});
-  q('[data-primary]').onclick=go;o.querySelectorAll('input').forEach(x=>x.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go();}});
-  q('#cx').onclick=()=>close();setTimeout(()=>q(edit?'#sh':'#sgC').focus(),80);});}
+  btn.onclick=go;o.querySelectorAll('input').forEach(x=>x.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go();}});
+  q('#cx').onclick=()=>close();setTimeout(()=>{const f=q(edit?'#sh':'#sgC');f&&f.focus();},80);};
+  const confirmID=(stu,shop,unverified)=>{sfx('sel');
+    o.innerHTML=`<div class="ovc win pad clear"><div class="ov-k">CHECK</div><h2>請確認你的身分</h2>
+     <div class="idcard"><span>${esc(stu.cls)} 班</span><span>${esc(stu.seat)} 號</span><b>${esc(stu.name)}</b></div>
+     <p>這是你本人嗎？確認後這些資料會交給老師，之後不能自己修改。</p>
+     <div class="ov-row" style="justify-content:center"><button class="pbtn" data-primary>是，開始營業</button><button class="pbtn alt" id="no">不是，重新填寫</button></div></div>`;
+    o.querySelector('#no').onclick=()=>{sfx('sel');render(Object.assign({},stu,{shop}));};
+    o.querySelector('[data-primary]').onclick=()=>{
+      const sid=sidOf(stu),prev=loadKey(SKEY(sid)),mute=S.muted;
+      S=prev||fresh();S.student=stu;S.name=stu.name;if(shop||!prev)S.shop=shop;if(!prev)S.muted=mute;save();
+      try{localStorage.setItem(CUR,sid);}catch(e){}
+      logEv('login',{note:(prev?'回到遊戲':'第一次登入')+(unverified?'（連線失敗，名單未即時核對）':'')});sfx('ok');
+      close().then(()=>{hub();toast(`「${sname()}」開張了！`,prev?'歡迎回來，進度已讀取':'店門口的招牌已經掛上','店');});};
+    setTimeout(()=>o.querySelector('[data-primary]').focus(),60);};
+  render(pre);});}
 function switchStudent(){flush();try{localStorage.removeItem(CUR);}catch(e){}const m=S.muted;S=fresh();S.muted=m;applyTM();titleScreen();toast('已登出','換下一位同學登入','↺');}
 
 function hub(){
@@ -1141,7 +1166,7 @@ const QNO=QLIST.map(x=>x[0]),QNAME=Object.fromEntries(QLIST);
 function tModel(){const d=T.data,SH=d.sumHead,LH=d.logHead,si=n=>SH.indexOf(n),li=n=>LH.indexOf(n);
   const students=d.sum.filter(r=>String(r[0]).trim()!=='').map(r=>({cls:String(r[si('班級')]),seat:String(r[si('座號')]).padStart(2,'0'),name:String(r[si('姓名')]),shop:String(r[si('店名')]||''),
     last:r[si('最後上線')]?new Date(r[si('最後上線')]):null,cur:String(r[si('目前進度')]||''),lv:+r[si('等級')]||1,rev:+r[si('營收')]||0,stars:parseInt(String(r[si('財務室')]||'0'))||0,price:r[si('大杯定價')],
-    zs:ZONES.map(z=>String(r[si(z.name)]||'')),tot:+r[si('總星數')]||0,score:+r[si('分數')]||0,mins:+r[si('遊戲時間(分)')]||0,firstN:+r[si('一次答對題數')]||0,n:+r[si('累計作答')]||0,fr:String(r[si('第一次答對率')]||'')}))
+    zs:ZONES.map(z=>String(r[si(z.name)]||'')),tot:+r[si('總星數')]||0,score:+r[si('分數')]||0,mins:+r[si('遊戲時間(分)')]||0,firstN:+r[si('一次答對題數')]||0,n:+r[si('累計作答')]||0,chk:String(r[si('名單核對')]||''),fr:String(r[si('第一次答對率')]||'')}))
     .sort((a,b)=>a.cls.localeCompare(b.cls,'zh-Hant',{numeric:true})||(+a.seat)-(+b.seat));
   const g=(r,n)=>r[li(n)];
   const logs=d.log.map(r=>({t:g(r,'收到時間')?new Date(g(r,'收到時間')):null,cls:String(g(r,'班級')),seat:String(g(r,'座號')).padStart(2,'0'),name:String(g(r,'姓名')),ev:g(r,'事件'),qno:String(g(r,'題號')||''),
@@ -1154,7 +1179,7 @@ function showTeacher(){if(!T){titleScreen();return;}const m=tModel(),classes=[..
    <div class="tpage"><div class="thead"><h1>全班經營紀錄</h1><p>資料更新於 ${new Date(T.data.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}。點學生那一列可以看他完整的遊戲過程；「關卡題庫」可以瀏覽每一關的題目與答案。${T.data.truncated?'（紀錄太多，只載入最近 12000 筆）':''}</p></div>
    <div class="win pad" id="tmbox"></div><div id="tstats"></div>
    <div class="tbar"><select id="tCls" aria-label="班級"><option value="all">全部班級</option>${classes.map(c=>`<option value="${esc(c)}"${T.cls===c?' selected':''}>${esc(c)} 班</option>`).join('')}</select><input id="tQ" type="search" placeholder="搜尋姓名或座號" value="${esc(T.q)}" aria-label="搜尋學生">
-   <div class="tabs2" role="tablist">${[['students','學生名單'],['diag','迷思診斷'],['price','定價分布'],['feed','最新動態'],['bank','關卡題庫']].map(([k,n])=>`<button class="chipbtn" role="tab" data-t="${k}" aria-pressed="${T.tab===k}" aria-selected="${T.tab===k}">${n}</button>`).join('')}</div></div>
+   <div class="tabs2" role="tablist">${[['students','學生名單'],['diag','迷思診斷'],['price','定價分布'],['feed','最新動態'],['roster','名單核對'],['bank','關卡題庫']].map(([k,n])=>`<button class="chipbtn" role="tab" data-t="${k}" aria-pressed="${T.tab===k}" aria-selected="${T.tab===k}">${n}</button>`).join('')}</div></div>
    <div class="win pad" id="tout"></div></div>`);
   const hr=$('#hudr');
   const bk=E('button','chipbtn','◀ 離開');bk.onclick=()=>{sfx('sel');titleScreen();};
@@ -1170,9 +1195,10 @@ function renderT(m){const f=tFilter(m),out=$('#tout'),ans=f.logs.filter(l=>l.ev=
   const cleared=f.students.filter(s=>s.stars>0).length,fr=ans.length?Math.round(ans.filter(a=>a.first).length/ans.length*100):null;
   $('#tstats').innerHTML=`<div class="tstats"><div class="win tstat"><b>${f.students.length}</b><span>學生人數</span><small>今天上線 ${today} 人・正在玩 ${live} 人</small></div><div class="win tstat"><b>${cleared}</b><span>終章通過</span><small>${f.students.length?Math.round(cleared/f.students.length*100):0}% 的學生</small></div><div class="win tstat"><b>${fr==null?'—':fr+'%'}</b><span>第一次就答對</span><small>共 ${ans.length} 次作答</small></div><div class="win tstat"><b>${(()=>{const p=f.students.map(s=>+s.price).filter(Boolean);return p.length?'$'+Math.round(p.reduce((a,b)=>a+b,0)/p.length):'—';})()}</b><span>平均大杯定價</span><small>合理區間 $74～$86</small></div><div class="win tstat"><b>${(()=>{const p=f.students.map(s=>s.mins).filter(Boolean);return p.length?(p.reduce((a,b)=>a+b,0)/p.length).toFixed(1)+'分':'—';})()}</b><span>平均遊戲時間</span><small>目標 20 分鐘內</small></div></div>`;
   if(T.tab==='bank'){out.innerHTML=bankHTML();return;}
+  if(T.tab==='roster'){out.innerHTML=rosterHTML(m);bindRoster(out);return;}
   if(T.tab!=='bank'&&!f.students.length&&!f.logs.length){out.innerHTML='<div class="tempty">還沒有學生的紀錄。<br>學生從 GitHub Pages 網址進入遊戲、登記上班後，資料就會出現在這裡。</div>';return;}
   if(T.tab==='students'){
-    out.innerHTML=`<div class="tscroll"><table class="ttab"><thead><tr><th>班級 座號</th><th>姓名</th><th>店名</th><th>目前進度</th><th>Lv</th><th>研發 設計 品牌 吧台 財務</th><th>總星</th><th>分數</th><th>遊戲時間</th><th>第一次答對率</th><th>大杯定價</th><th>最後上線</th></tr></thead><tbody>${f.students.map((s,i)=>`<tr data-i="${i}" tabindex="0"><td class="n8">${esc(s.cls)}-${esc(s.seat)}</td><td>${s.last&&now-s.last<5*60000?'<span class="live" title="正在玩"></span>':''}${esc(s.name)}</td><td>${esc(s.shop)}</td><td>${esc(s.cur)}${s.stars?`<span class="sub">${'★'.repeat(s.stars)}</span>`:''}</td><td class="n8">${s.lv}</td><td>${s.zs.map(c=>`<span class="qc ${c?'ok':''}">${c?esc(c):'—'}</span>`).join('')}</td><td class="n8">${s.tot}</td><td class="n8">${s.score||'—'}</td><td>${s.mins?s.mins+' 分':'—'}</td><td class="n8">${esc(s.fr||'—')}</td><td class="n8">${s.price?'$'+esc(s.price):'—'}</td><td>${rel(s.last)}</td></tr>`).join('')}</tbody></table></div><p class="tempty" style="padding:12px 0 0;text-align:left;font-size:14px">五區依序是：研發部（1-1）、杯身設計室（1-2）、品牌部（1-3）、吧台（1-4）、財務室（終章）。點學生那一列可以看他完整的遊戲過程（進出關卡、每題作答、用時）。</p>`;
+    out.innerHTML=`<div class="tscroll"><table class="ttab"><thead><tr><th>班級 座號</th><th>姓名</th><th>店名</th><th>目前進度</th><th>Lv</th><th>研發 設計 品牌 吧台 財務</th><th>總星</th><th>分數</th><th>遊戲時間</th><th>第一次答對率</th><th>大杯定價</th><th>最後上線</th></tr></thead><tbody>${f.students.map((s,i)=>`<tr data-i="${i}" tabindex="0"><td class="n8">${esc(s.cls)}-${esc(s.seat)}</td><td>${s.last&&now-s.last<5*60000?'<span class="live" title="正在玩"></span>':''}${esc(s.name)}${s.chk==='名單外'?'<span class="badx">名單外</span>':''}</td><td>${esc(s.shop)}</td><td>${esc(s.cur)}${s.stars?`<span class="sub">${'★'.repeat(s.stars)}</span>`:''}</td><td class="n8">${s.lv}</td><td>${s.zs.map(c=>`<span class="qc ${c?'ok':''}">${c?esc(c):'—'}</span>`).join('')}</td><td class="n8">${s.tot}</td><td class="n8">${s.score||'—'}</td><td>${s.mins?s.mins+' 分':'—'}</td><td class="n8">${esc(s.fr||'—')}</td><td class="n8">${s.price?'$'+esc(s.price):'—'}</td><td>${rel(s.last)}</td></tr>`).join('')}</tbody></table></div><p class="tempty" style="padding:12px 0 0;text-align:left;font-size:14px">五區依序是：研發部（1-1）、杯身設計室（1-2）、品牌部（1-3）、吧台（1-4）、財務室（終章）。點學生那一列可以看他完整的遊戲過程（進出關卡、每題作答、用時）。</p>`;
     out.querySelectorAll('tbody tr').forEach(tr=>{const go=()=>studentDetail(f.students[+tr.dataset.i],m);tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter')go();};});return;}
   if(T.tab==='diag'){
     out.innerHTML=`<div class="dg">${QNO.filter(no=>ans.some(x=>x.qno===no)).length?'':'<div class="tempty">還沒有作答紀錄。</div>'}${QNO.filter(no=>ans.some(x=>x.qno===no)).map(no=>{const a=ans.filter(x=>x.qno===no),n=a.length,first=a.filter(x=>x.first).length,dg={};
@@ -1192,6 +1218,29 @@ function renderT(m){const f=tFilter(m),out=$('#tout'),ans=f.logs.filter(l=>l.ev=
   const fe=f.logs.slice(-80).reverse();
   out.innerHTML=`<div class="feed">${fe.map(l=>{let what=esc(l.ev);if(l.ev==='作答')what=`${l.first?'<span class="ok">一次答對</span>':`<span class="bad">試了 ${l.tries} 次</span>`}　${esc(l.qno)} ${esc(QNAME[l.qno]||'')}${l.diag?'　<span class="w">'+esc(l.diag)+'</span>':''}`;else if(l.note)what+='　'+esc(l.note);
     return `<div><span class="w">${rel(l.t)}</span><span><b style="font-weight:400">${esc(l.name)}</b> <span class="w">${esc(l.cls)}-${esc(l.seat)}</span></span><span>${what}</span></div>`;}).join('')||'<div class="tempty">還沒有動態。</div>'}</div>`;}
+function rosterHTML(m){const R=(T.data.roster||[]).map(r=>({cls:String(r[0]).trim(),seat:String(+r[1]),name:String(r[2])})).filter(r=>T.cls==='all'||r.cls===T.cls);
+  const played=new Set(m.students.map(s=>s.cls+'-'+(+s.seat)));
+  const classes=[...new Set(R.map(r=>r.cls))].sort((a,b)=>a.localeCompare(b,'zh-Hant',{numeric:true}));
+  const outside=m.students.filter(s=>s.chk==='名單外'&&(T.cls==='all'||s.cls===T.cls));
+  let h='';
+  if(!R.length)h+='<div class="tempty">還沒有學生名單。名單上傳後，學生登入時會核對班級、座號、姓名，對不上就不能進入遊戲。</div>';
+  else{h+=`<p style="color:var(--fg2);font-size:15px;margin-bottom:12px">名單共 ${R.length} 人。學生登入時要「班級＋座號＋姓名」都對得上才能進入遊戲。</p>`;
+    h+=classes.map(c=>{const rs=R.filter(r=>r.cls===c),np=rs.filter(r=>!played.has(r.cls+'-'+r.seat)).sort((a,b)=>a.seat-b.seat);
+      return `<div class="rcls"><h3>${esc(c)} 班</h3><div class="meta">已登入 ${rs.length-np.length} / ${rs.length} 人${np.length?'・尚未登入：':'・全班都登入過了'}</div>${np.length?`<div class="npl">${np.map(r=>`<span>${esc(r.seat)} ${esc(r.name)}</span>`).join('')}</div>`:''}</div>`;}).join('');
+    if(outside.length)h+=`<div class="rcls"><h3 style="color:var(--pink)">名單外的紀錄（${outside.length}）</h3><div class="meta">這些資料和名單對不上，可能是更新名單前登入、或名單本身有誤。</div><div class="npl">${outside.map(s=>`<span>${esc(s.cls)}-${esc(s.seat)} ${esc(s.name)}</span>`).join('')}</div></div>`;}
+  h+=`<details class="rup"${R.length?'':' open'}><summary>${R.length?'更新學生名單（會整份取代）':'上傳學生名單'}</summary>
+    <p style="font-size:14px;color:var(--fg2)">從 Excel 或 Google 試算表複製「班級、座號、姓名」三欄貼上，一行一位學生。</p>
+    <textarea id="rosterIn" placeholder="901	1	王小明&#10;901	2	陳大文"></textarea>
+    <div class="ov-row" style="margin-top:8px"><button type="button" class="pbtn sm" id="rosterUp">上傳名單</button><span id="rosterMsg" style="font-size:14px;color:var(--fg2)"></span></div></details>`;
+  return h;}
+function bindRoster(root){const b=root.querySelector('#rosterUp');if(!b)return;b.onclick=async()=>{const msg=root.querySelector('#rosterMsg');
+  const rows=root.querySelector('#rosterIn').value.split(/\n/).map(l=>l.trim().split(/[\t,，\s]+/)).filter(a=>a.length>=3&&/^\d{3,4}$/.test(toHalf(a[0]))&&/^\d+$/.test(toHalf(a[1]))).map(a=>[toHalf(a[0]),String(+toHalf(a[1])),a.slice(2).join('')]);
+  if(!rows.length){msg.textContent='沒有讀到資料，請確認每行是「班級 座號 姓名」。';return;}
+  b.disabled=true;msg.textContent=`上傳中…（${rows.length} 人）`;
+  try{const r=await fetch(logUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'roster',key:T.key,rows})}).then(r=>r.json());
+    if(!r.ok){msg.textContent='上傳失敗：'+r.error;b.disabled=false;return;}
+    const d=await fetchTeacher(T.key);if(d.ok)T.data=d;sfx('ok');toast('名單已更新',`共 ${r.n} 人`,'名');showTeacher();}
+  catch(e){msg.textContent='連不上紀錄服務。';b.disabled=false;}};}
 function bankHTML(){return ZONES.map(z=>{const lv=LEVELS[z.id];let n=0;
   const qs=lv.steps.map(st=>{
     if(st.t==='note')return `<div class="qb note"><span class="t">員工手冊：${st.title}</span>　${st.body}${st.sub?'<br>'+st.sub:''}</div>`;

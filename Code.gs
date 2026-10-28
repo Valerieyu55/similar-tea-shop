@@ -17,8 +17,10 @@
 
 const SUM = '學生總表';
 const LOG = '作答紀錄';
+const ROS = '學生名單';
+const ROS_HEAD = ['班級','座號','姓名'];
 const ZONE_COLS = [['lab','研發部'],['draft','杯身設計室'],['brand','品牌部'],['bar','吧台'],['office','財務室']];
-const SUM_HEAD = ['班級','座號','姓名','店名','最後上線','目前進度','等級','經驗值','營收'].concat(ZONE_COLS.map(z => z[1]), ['總星數','大杯定價','隱藏卡','累計作答','第一次答對率','一次答對題數','遊戲時間(分)','分數']);
+const SUM_HEAD = ['班級','座號','姓名','店名','最後上線','目前進度','等級','經驗值','營收'].concat(ZONE_COLS.map(z => z[1]), ['總星數','大杯定價','隱藏卡','累計作答','第一次答對率','一次答對題數','遊戲時間(分)','分數','名單核對']);
 const LOG_HEAD = ['收到時間','事件ID','班級','座號','姓名','店名','事件','題號','題目','學生作答（依序）','正確答案','第一次就答對','最後答對','作答次數','看提示','作答秒數','迷思診斷','備註'];
 const EV = {login:'登入', shop:'改店名', start:'進入關卡', answer:'作答', clear:'過關', leave:'中途離開', reset:'重設進度'};
 const MAX_LOG_RETURN = 12000;
@@ -28,6 +30,7 @@ function setup() {
   if (!props.getProperty('TEACHER_KEY')) props.setProperty('TEACHER_KEY', '55555');
   sheet_(SUM, SUM_HEAD);
   sheet_(LOG, LOG_HEAD);
+  sheet_(ROS, ROS_HEAD);
 }
 
 function sheet_(name, head) {
@@ -38,7 +41,7 @@ function sheet_(name, head) {
     sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold').setBackground('#fff3d6');
     sh.setFrozenRows(1);
     // 班級、座號存成純文字，避免 05 被轉成 5
-    if (name === SUM) sh.getRange('A:B').setNumberFormat('@');
+    if (name === SUM || name === ROS) sh.getRange('A:B').setNumberFormat('@');
     if (name === LOG) { sh.getRange('C:D').setNumberFormat('@'); sh.getRange('H:H').setNumberFormat('@'); }
   }
   else {
@@ -62,6 +65,8 @@ function doPost(e) {
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ok: false, error: 'badjson'}); }
   if (d.action === 'teacher') return teacher_(String(d.key || ''));
   if (d.action === 'board') return board_(d);
+  if (d.action === 'verify') return verify_(d);
+  if (d.action === 'roster') return setRoster_(d);
   return ingest_(d);
 }
 
@@ -75,6 +80,53 @@ function removeTestRows() {
     }
   });
   CacheService.getScriptCache().remove('board');
+}
+
+/* ---------- 學生名單 ---------- */
+const normName_ = n => String(n || '').replace(/\s+/g, '');
+const key_ = (c, s) => String(c || '').trim() + '-' + String(+s);
+function roster_() {
+  const sh = sheet_(ROS, ROS_HEAD);
+  const v = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues() : [];
+  const map = {}, classes = {};
+  v.forEach(r => { if (String(r[0]).trim() === '') return; map[key_(r[0], r[1])] = normName_(r[2]); classes[String(r[0]).trim()] = 1; });
+  return {map, classes, rows: v.filter(r => String(r[0]).trim() !== ''), size: Object.keys(map).length};
+}
+function check_(R, cls, seat, name) {
+  if (!R.size) return '';
+  if (!R.classes[String(cls || '').trim()]) return 'cls';
+  const k = key_(cls, seat);
+  if (!(k in R.map)) return 'seat';
+  if (R.map[k] !== normName_(name)) return 'name';
+  return 'ok';
+}
+// 學生登入時核對（只回傳對不對，不會透露正確姓名）
+function verify_(d) {
+  const R = roster_();
+  if (!R.size) return json_({ok: true, roster: false});
+  const r = check_(R, d.cls, d.seat, d.name);
+  return json_({ok: r === 'ok', roster: true, why: r === 'ok' ? '' : r});
+}
+// 老師上傳名單（需要教師密碼，會整份取代）
+function setRoster_(d) {
+  const cache = CacheService.getScriptCache(), fails = +(cache.get('tfail') || 0);
+  if (fails >= 8) return json_({ok: false, error: 'locked'});
+  const real = PropertiesService.getScriptProperties().getProperty('TEACHER_KEY');
+  if (!real || String(d.key || '') !== real) { cache.put('tfail', String(fails + 1), 600); return json_({ok: false, error: 'bad'}); }
+  const rows = (Array.isArray(d.rows) ? d.rows : []).map(r => [String(r[0] || '').trim(), String(+r[1]), normName_(r[2])])
+    .filter(r => r[0] && r[1] !== 'NaN' && r[2]);
+  if (!rows.length) return json_({ok: false, error: 'empty'});
+  const sh = sheet_(ROS, ROS_HEAD);
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 3).clearContent();
+  sh.getRange('A:B').setNumberFormat('@');
+  sh.getRange(2, 1, rows.length, 3).setValues(rows);
+  // 重新標記學生總表的「名單核對」
+  const R = roster_(), sum = sheet_(SUM, SUM_HEAD), ci = SUM_HEAD.indexOf('名單核對') + 1;
+  if (sum.getLastRow() > 1) {
+    const v = sum.getRange(2, 1, sum.getLastRow() - 1, 3).getValues();
+    sum.getRange(2, ci, v.length, 1).setValues(v.map(r => [check_(R, r[0], r[1], r[2]) === 'ok' ? '✔' : '名單外']));
+  }
+  return json_({ok: true, n: rows.length});
 }
 
 /* ---------- 學生上傳 ---------- */
@@ -125,6 +177,8 @@ function upsert_(s, now) {
     stat.n || 0, stat.n ? Math.round(stat.f / stat.n * 100) + '%' : '',
     s.first || 0, Math.round((s.ms || 0) / 6000) / 10, s.score || 0
   ]);
+  const ck = check_(roster_(), cls, seat, s.st.name);
+  row.push(ck === '' ? '' : ck === 'ok' ? '✔' : '名單外');
   const last = sh.getLastRow();
   if (last > 1) {
     const keys = sh.getRange(2, 1, last - 1, 2).getDisplayValues();
@@ -183,5 +237,5 @@ function teacher_(key) {
   const total = lg.getLastRow() - 1;
   const n = Math.min(Math.max(total, 0), MAX_LOG_RETURN);
   const lv = n > 0 ? lg.getRange(lg.getLastRow() - n + 1, 1, n, LOG_HEAD.length).getValues() : [];
-  return json_({ok: true, at: Date.now(), sumHead: SUM_HEAD, sum: sv, logHead: LOG_HEAD, log: lv, truncated: total > MAX_LOG_RETURN});
+  return json_({ok: true, at: Date.now(), sumHead: SUM_HEAD, sum: sv, logHead: LOG_HEAD, log: lv, truncated: total > MAX_LOG_RETURN, roster: roster_().rows});
 }
