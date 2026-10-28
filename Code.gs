@@ -39,7 +39,7 @@ function sheet_(name, head) {
     sh.setFrozenRows(1);
     // 班級、座號存成純文字，避免 05 被轉成 5
     if (name === SUM) sh.getRange('A:B').setNumberFormat('@');
-    if (name === LOG) sh.getRange('C:D').setNumberFormat('@');
+    if (name === LOG) { sh.getRange('C:D').setNumberFormat('@'); sh.getRange('H:H').setNumberFormat('@'); }
   }
   else {
     // 欄位更新時，自動把標題列換成新版
@@ -65,6 +65,18 @@ function doPost(e) {
   return ingest_(d);
 }
 
+/* 刪除班級填「測試」的資料（老師自己試玩後可執行一次） */
+function removeTestRows() {
+  [SUM, LOG].forEach(name => {
+    const sh = sheet_(name, name === SUM ? SUM_HEAD : LOG_HEAD);
+    const col = name === SUM ? 1 : 3;
+    for (let r = sh.getLastRow(); r >= 2; r--) {
+      if (String(sh.getRange(r, col).getValue()).trim() === '測試') sh.deleteRow(r);
+    }
+  });
+  CacheService.getScriptCache().remove('board');
+}
+
 /* ---------- 學生上傳 ---------- */
 function ingest_(d) {
   const lock = LockService.getScriptLock();
@@ -84,7 +96,7 @@ function ingest_(d) {
       rows.push([
         ev.t ? new Date(ev.t) : now, ev.id,
         String(ev.st.cls || ''), String(ev.st.seat || ''), String(ev.st.name || ''), String(ev.shop || ''),
-        EV[ev.type] || ev.type, ev.qno || '', ev.question || '', ev.given || '', ev.correct || '',
+        EV[ev.type] || ev.type, ev.qno ? "'" + ev.qno : '', ev.question || '', ev.given || '', ev.correct || '',
         isAns ? yn(ev.first) : '', isAns ? yn(ev.ok) : '', isAns ? (ev.tries || '') : '',
         isAns ? yn(ev.hint) : '', isAns ? (ev.sec || '') : '', ev.diag || '', ev.note || ''
       ]);

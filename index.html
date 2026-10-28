@@ -967,7 +967,7 @@ function dialog(st){$('#left').innerHTML='';
   clearInterval(typing);typing=null;let my=0;
   const done=()=>{clearInterval(my);if(typing===my)typing=null;dt.innerHTML=html;dm.hidden=false;};
   if(reduce)done();else{my=setInterval(()=>{if(k>=chunks.length)return done();out+=chunks[k++];dt.innerHTML=out;if(k%3===0)sfx('blip');},16);typing=my;}
-  d.onclick=()=>{if(typing===my&&my)done();else{sfx('sel');next();}};const bk=$('#bk');if(bk)bk.onclick=e=>{e.stopPropagation();back();};d.focus({preventScroll:true});}
+  d.onclick=()=>{if(d.classList.contains('hide')||d.dataset.step!==String(L.i))return;if(typing===my&&my)done();else{sfx('sel');next();}};d.dataset.step=String(L.i);const bk=$('#bk');if(bk)bk.onclick=e=>{e.stopPropagation();back();};d.focus({preventScroll:true});}
 document.addEventListener('keydown',e=>{if((e.key==='ArrowLeft'||e.key==='Backspace')&&!e.repeat){const d=$('#dbox');if(d&&!d.classList.contains('hide')&&document.activeElement===d){e.preventDefault();back();return;}}
   if((e.key===' '||e.key==='Enter')&&!e.repeat){const d=$('#dbox');if(d&&!d.classList.contains('hide')&&document.activeElement===d){e.preventDefault();d.click();}}});
 function showNote(st){overlay((o,close)=>{sfx('ok');o.innerHTML=`<div class="ovc win paper pad"><div class="ov-k">STAFF HANDBOOK</div><h2>員工手冊・新的一頁</h2><div class="formula">${st.title}<small>${st.body}</small><small>${st.sub||''}</small></div><div class="ov-row"><button class="pbtn" data-primary>收進手冊</button><button class="pbtn alt" id="nb">◀ 上一步</button></div></div>`;o.querySelector('[data-primary]').onclick=()=>close().then(next);o.querySelector('#nb').onclick=()=>close().then(back);});}
